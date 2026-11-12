@@ -44,6 +44,25 @@ public sealed class RetryTests
         Assert.Equal("order-1042", http.Requests[1].Header("Idempotency-Key"));
     }
 
+    [Theory]
+    [InlineData(520)]
+    [InlineData(521)]
+    [InlineData(522)]
+    [InlineData(523)]
+    [InlineData(524)]
+    public async Task CloudflaresAnswersForAnUnreachableOriginAreRetriedWithTheSameIdempotencyKey(int status)
+    {
+        var http = new MockHttp().Text("<html>Cloudflare</html>", status, "text/html").Json(Data(Fixture("charge")), 201);
+
+        var response = await Transport(http, delays).RequestAsync(HttpMethod.Post, "/v1/charges", null, Body, null, default);
+
+        Assert.Equal(201, response.Status);
+        Assert.Equal(2, http.Requests.Count);
+        Assert.NotNull(http.Requests[0].Header("Idempotency-Key"));
+        Assert.Equal(http.Requests[0].Header("Idempotency-Key"), http.Requests[1].Header("Idempotency-Key"));
+        Assert.Single(delays);
+    }
+
     [Fact]
     public async Task AServerErrorIsRetriedForReadsOnly()
     {

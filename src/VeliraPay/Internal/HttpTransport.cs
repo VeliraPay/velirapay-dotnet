@@ -6,8 +6,8 @@ namespace VeliraPay;
 /// <summary>Sends requests to the VeliraPay API and turns its answers into responses or exceptions.</summary>
 internal sealed class HttpTransport
 {
-    /// <summary>The statuses worth another attempt for any request.</summary>
-    private static readonly int[] RetryableStatuses = [429, 502, 503, 504];
+    /// <summary>The statuses worth another attempt for any request, Cloudflare's 520 to 524 for an origin it got no answer from included.</summary>
+    private static readonly int[] RetryableStatuses = [429, 502, 503, 504, 520, 521, 522, 523, 524];
 
     /// <summary>What .NET calls a failed request when it says nothing more.</summary>
     private const string GenericSendFailure = "An error occurred while sending the request.";
