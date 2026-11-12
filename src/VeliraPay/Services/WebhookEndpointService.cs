@@ -100,7 +100,7 @@ public sealed class WebhookEndpointService : Service
     public async Task<WebhookEndpoint> RotateSecretAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
         => Endpoint(await RespondAsync(HttpMethod.Post, Path("/v1/webhook-endpoints/{id}/secret", id), null, requestOptions, cancellationToken).ConfigureAwait(false));
 
-    /// <summary>List what the endpoint was sent, newest first, kept for 30 days, without the bodies.</summary>
+    /// <summary>List what the endpoint was sent, newest first, kept for 30 days, without the bodies; the page's <see cref="Page{T}.AutoPagingIteratorAsync"/> walks the rest.</summary>
     /// <param name="id">The endpoint's id.</param>
     /// <param name="options">Filters and the page to fetch.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
