@@ -2,6 +2,10 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- Constants for more of the values the API names, as `static` classes of strings like `Asset`: `AddressNetwork`, the networks `PayoutAddresses.UpdateAsync()` and `DeleteAsync()` take (only those `PayoutAddresses.ListAsync()` returns can be set; the API answers the others with a 404), `CheckoutAppearance`, `WebhookDeliveryStatus`, `PlanName`, `AccountType`, `CheckoutLocale`, the checkout's eight languages with Arabic, and `ActivityAction`, every action of the activity log, `team.second_factor_requirement_changed` included. Plain strings keep working wherever these are taken or given.
+
 ## 0.1.0 - 2026-11-12
 
 The first version, covering what the PHP library covers as of its 0.6.5, and what the Node.js library 0.1.0 adds:

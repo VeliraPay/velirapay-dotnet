@@ -40,7 +40,7 @@ public sealed class AccountUpdateOptions : BaseOptions
 /// <summary>Changes to how the account's checkout looks and what it falls back on.</summary>
 public sealed class AccountCheckoutOptions : BaseOptions
 {
-    /// <summary>"auto", "light" or "dark".</summary>
+    /// <summary>One of the <see cref="CheckoutAppearance"/> values: "auto", "light" or "dark".</summary>
     public string? Appearance { get => Get<string>("appearance"); set => Set("appearance", value); }
 
     /// <summary>The order coins are listed in.</summary>
@@ -131,7 +131,7 @@ public sealed class AddressOptions : BaseOptions
 /// <summary>Changes to the payment settings: only the properties you set are changed.</summary>
 public sealed class PaymentSettingsUpdateOptions : BaseOptions
 {
-    /// <summary>The currency new links and reports default to.</summary>
+    /// <summary>The currency new links and reports default to, one of the <see cref="Currency"/> values.</summary>
     public string? DefaultCurrency { get => Get<string>("default_currency"); set => Set("default_currency", value); }
 
     /// <summary>How far short of the amount due, in percent with at most 2 decimal places, still counts as paid.</summary>
@@ -140,7 +140,7 @@ public sealed class PaymentSettingsUpdateOptions : BaseOptions
     /// <summary>How much surplus, in percent with at most 2 decimal places, is ignored before a charge is flagged as overpaid.</summary>
     public decimal? OverpaymentThreshold { get => Get<decimal?>("overpayment_threshold"); set => Set("overpayment_threshold", value); }
 
-    /// <summary>The fallback checkout language: "en", "fr", "de", "es", "tr", "pt", "ru" or "ar"; null for English.</summary>
+    /// <summary>The checkout's fallback language, one of the <see cref="VeliraPay.CheckoutLocale"/> values: "en", "fr", "de", "es", "tr", "pt", "ru" or "ar"; null for English.</summary>
     public string? CheckoutLocale { get => Get<string>("checkout_locale"); set => Set("checkout_locale", value); }
 
     /// <summary>Whether open invoices are reminded automatically.</summary>

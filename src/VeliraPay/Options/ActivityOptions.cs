@@ -3,7 +3,7 @@ namespace VeliraPay;
 /// <summary>Which entries of the activity log to list.</summary>
 public sealed class ActivityListOptions : ListOptions
 {
-    /// <summary>Only entries of this action, such as "api_key.created", or "sensitive" for the sensitive ones.</summary>
+    /// <summary>Only entries of this action, one of the <see cref="ActivityAction"/> values such as <see cref="ActivityAction.ApiKeyCreated"/>, or "sensitive" for the sensitive ones.</summary>
     public string? Action { get => Get<string>("action"); set => Set("action", value); }
 
     /// <summary>Only what this person did.</summary>

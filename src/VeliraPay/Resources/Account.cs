@@ -31,13 +31,13 @@ public sealed class Account : ApiResource
         DefaultCurrency = JsonValues.String(data, "default_currency");
         UnderpaymentTolerance = JsonValues.Decimal(data, "underpayment_tolerance");
         OverpaymentThreshold = JsonValues.Decimal(data, "overpayment_threshold");
-        Plan = JsonValues.String(plan, "name", "free");
+        Plan = JsonValues.String(plan, "name", PlanName.Free);
         FeePercent = JsonValues.Decimal(plan, "fee_percent");
         ProEndsAt = JsonValues.Date(plan, "pro_ends_at");
         Checkout = JsonValues.TryGet(data, "checkout", out var checkout) && checkout.ValueKind == JsonValueKind.Object
             ? new AccountCheckout
             {
-                Appearance = JsonValues.String(checkout, "appearance", "auto"),
+                Appearance = JsonValues.String(checkout, "appearance", CheckoutAppearance.Auto),
                 CoinOrder = JsonValues.Strings(checkout, "coin_order"),
                 DefaultCoin = JsonValues.NullableString(checkout, "default_coin"),
                 SuccessUrl = JsonValues.NullableString(checkout, "success_url"),
@@ -65,7 +65,7 @@ public sealed class Account : ApiResource
     /// <summary>The account's slug.</summary>
     public string Id { get; }
 
-    /// <summary>Either "personal" or "organization".</summary>
+    /// <summary>One of the <see cref="AccountType"/> values: "personal" or "organization".</summary>
     public string Type { get; }
 
     /// <summary>The account's name.</summary>
@@ -101,7 +101,7 @@ public sealed class Account : ApiResource
     /// <summary>Who runs the account and what it sells; every field is null until it is filled in, and for a key without the sensitive account:write permission.</summary>
     public AccountBusiness Business { get; }
 
-    /// <summary>The currency new links and reports default to.</summary>
+    /// <summary>The currency new links and reports default to, one of the <see cref="Currency"/> values.</summary>
     public string DefaultCurrency { get; }
 
     /// <summary>How far short of the amount due, in percent, still counts as paid.</summary>
@@ -110,7 +110,7 @@ public sealed class Account : ApiResource
     /// <summary>How much surplus, in percent, is ignored before a charge is flagged as overpaid.</summary>
     public decimal OverpaymentThreshold { get; }
 
-    /// <summary>"free" or "pro".</summary>
+    /// <summary>One of the <see cref="PlanName"/> values: "free" or "pro".</summary>
     public string Plan { get; }
 
     /// <summary>The share of each payment kept as the platform's fee, in percent.</summary>
@@ -125,7 +125,7 @@ public sealed class Account : ApiResource
     /// <summary>The invoice numbering, footer and business details settings, or null when the answer has none.</summary>
     public AccountInvoices? Invoices { get; }
 
-    /// <summary>The fallback checkout language, or null for English.</summary>
+    /// <summary>The checkout's fallback language, one of the <see cref="VeliraPay.CheckoutLocale"/> values, or null for English.</summary>
     public string? CheckoutLocale { get; }
 
     /// <summary>Whether automatic invoice reminders are on.</summary>
@@ -144,10 +144,10 @@ public sealed class Account : ApiResource
     public IReadOnlyList<string> AcceptedAssets { get; }
 
     /// <summary>Whether the account is on Pro, which keeps no fee.</summary>
-    public bool IsPro => Plan == "pro";
+    public bool IsPro => Plan == PlanName.Pro;
 
     /// <summary>Whether this is an organization rather than a personal account.</summary>
-    public bool IsOrganization => Type == "organization";
+    public bool IsOrganization => Type == AccountType.Organization;
 
     /// <summary>Whether the key that fetched the account works in test mode.</summary>
     public bool IsTestMode => Mode == VeliraPay.Mode.Test;
@@ -156,7 +156,7 @@ public sealed class Account : ApiResource
 /// <summary>How an account's checkout looks and what it falls back on.</summary>
 public sealed record AccountCheckout
 {
-    /// <summary>"auto", "light" or "dark".</summary>
+    /// <summary>One of the <see cref="CheckoutAppearance"/> values: "auto", "light" or "dark".</summary>
     public required string Appearance { get; init; }
 
     /// <summary>The order coins are listed in.</summary>

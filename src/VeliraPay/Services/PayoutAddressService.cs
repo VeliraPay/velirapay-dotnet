@@ -13,8 +13,11 @@ public sealed class PayoutAddressService : Service
     public async Task<IReadOnlyList<PayoutAddress>> ListAsync(CancellationToken cancellationToken = default)
         => [.. List(await RespondAsync(HttpMethod.Get, "/v1/payout-addresses", null, null, cancellationToken).ConfigureAwait(false)).Select(address => new PayoutAddress(address))];
 
-    /// <summary>Point the payouts of one network, such as "bitcoin" or "evm", at an address. Payouts to a newly saved address wait 48 hours once the account has been paid out.</summary>
-    /// <param name="network">The network, as <see cref="PayoutAddress.Network"/> names it.</param>
+    /// <summary>
+    /// Point the payouts of one network, such as <see cref="AddressNetwork.Bitcoin"/> or <see cref="AddressNetwork.Evm"/>, at an address.
+    /// Payouts to a newly saved address wait 48 hours once the account has been paid out. Only a network <see cref="ListAsync"/> returns can be set; the API answers any other with a 404.
+    /// </summary>
+    /// <param name="network">The network, one of the <see cref="AddressNetwork"/> values, as <see cref="PayoutAddress.Network"/> names it.</param>
     /// <param name="options">The address.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
@@ -25,8 +28,8 @@ public sealed class PayoutAddressService : Service
         return new PayoutAddress(await RequestAsync(HttpMethod.Put, Path("/v1/payout-addresses/{id}", network), options, requestOptions, cancellationToken).ConfigureAwait(false));
     }
 
-    /// <summary>Remove the address of one network, so its payouts wait for a new one.</summary>
-    /// <param name="network">The network, as <see cref="PayoutAddress.Network"/> names it.</param>
+    /// <summary>Remove the address of one network, so its payouts wait for a new one. Only a network <see cref="ListAsync"/> returns can be removed; the API answers any other with a 404.</summary>
+    /// <param name="network">The network, one of the <see cref="AddressNetwork"/> values, as <see cref="PayoutAddress.Network"/> names it.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
     public async Task<PayoutAddress> DeleteAsync(string network, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)

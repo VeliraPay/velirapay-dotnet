@@ -35,7 +35,7 @@ public sealed class WebhookEndpointUpdateOptions : BaseOptions
 /// <summary>Which of a webhook endpoint's deliveries to list.</summary>
 public sealed class WebhookDeliveryListOptions : ListOptions
 {
-    /// <summary>Only deliveries in this state: "pending", "succeeded" or "failed".</summary>
+    /// <summary>Only deliveries in this state, one of the <see cref="WebhookDeliveryStatus"/> values.</summary>
     public string? Status { get => Get<string>("status"); set => Set("status", value); }
 
     /// <summary>Only deliveries of this <see cref="EventType"/>.</summary>

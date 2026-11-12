@@ -20,7 +20,7 @@ public sealed class PayoutAddress : ApiResource
         UpdatedAt = JsonValues.Date(data, "updated_at");
     }
 
-    /// <summary>The network, such as "bitcoin" or "evm", which is also its id in the paths.</summary>
+    /// <summary>The network, one of the <see cref="AddressNetwork"/> values such as "bitcoin" or "evm", which is also its id in the paths.</summary>
     public string Network { get; }
 
     /// <summary>The network's name.</summary>

@@ -113,7 +113,7 @@ public sealed class WebhookDelivery : ApiResource
     /// <summary>Whether it was a test event, which describes no real payment.</summary>
     public bool Test { get; }
 
-    /// <summary>"pending", "succeeded" or "failed".</summary>
+    /// <summary>One of the <see cref="WebhookDeliveryStatus"/> values: "pending", "succeeded" or "failed".</summary>
     public string Status { get; }
 
     /// <summary>How many times it was sent.</summary>
@@ -147,7 +147,7 @@ public sealed class WebhookDelivery : ApiResource
     public IReadOnlyList<WebhookDeliveryAttempt> AttemptLog { get; }
 
     /// <summary>Whether the endpoint accepted the delivery.</summary>
-    public bool Succeeded => Status == "succeeded";
+    public bool Succeeded => Status == WebhookDeliveryStatus.Succeeded;
 }
 
 /// <summary>One attempt to send a webhook delivery: the request it made and what the endpoint answered.</summary>

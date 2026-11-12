@@ -26,7 +26,7 @@ public sealed class Activity : ApiResource
     /// <summary>The entry's id.</summary>
     public string Id { get; }
 
-    /// <summary>What was done, such as "api_key.created".</summary>
+    /// <summary>What was done, one of the <see cref="ActivityAction"/> values such as "api_key.created", or one the API added after this version of the library.</summary>
     public string Action { get; }
 
     /// <summary>What was done, in words.</summary>
