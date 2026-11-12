@@ -119,6 +119,7 @@ public sealed class WebhookTests
         Assert.True(invoice.IsPaid);
         Assert.Null(invoice.Overdue);
         Assert.Null(invoice.DocumentUrl);
+        Assert.Null(invoice.SuccessUrl);
         Assert.Equal(["m2q7w4e9r1ty", "z8x6c4v2b0nm"], invoice.Charges.Select(charge => charge.Id));
         Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);
     }

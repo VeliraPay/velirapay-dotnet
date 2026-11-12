@@ -24,6 +24,12 @@ public sealed class InvoiceCreateOptions : BaseOptions
     /// <summary>The day it is due: today or later.</summary>
     public DateOnly? DueAt { get => Get<DateOnly?>("due_at"); set => Set("due_at", value); }
 
+    /// <summary>The https:// page the customer is offered a button back to once they have paid.</summary>
+    public string? SuccessUrl { get => Get<string>("success_url"); set => Set("success_url", value); }
+
+    /// <summary>The https:// page the customer can go back to from the invoice without paying.</summary>
+    public string? CancelUrl { get => Get<string>("cancel_url"); set => Set("cancel_url", value); }
+
     /// <summary>Whether to email it to the customer straight away.</summary>
     public bool? SendEmail { get => Get<bool?>("send_email"); set => Set("send_email", value); }
 }

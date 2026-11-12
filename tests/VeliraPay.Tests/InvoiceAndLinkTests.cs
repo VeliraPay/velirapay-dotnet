@@ -22,6 +22,8 @@ public sealed class InvoiceAndLinkTests
                 new InvoiceItemOptions { Description = "Hosting", Quantity = 2.5m, UnitAmount = 100.00m },
             ],
             DueAt = new DateOnly(2026, 10, 15),
+            SuccessUrl = "https://example.com/orders/1042",
+            CancelUrl = "https://example.com/checkout",
             SendEmail = true,
         });
 
@@ -32,7 +34,7 @@ public sealed class InvoiceAndLinkTests
             """
             {"customer_name":"Grace Hopper","customer_email":"grace@example.com","currency":"USD",
              "items":[{"description":"Consulting","quantity":"10","unit_amount":"100"},{"description":"Hosting","quantity":"2.5","unit_amount":"100"}],
-             "due_at":"2026-10-15","send_email":true}
+             "due_at":"2026-10-15","success_url":"https://example.com/orders/1042","cancel_url":"https://example.com/checkout","send_email":true}
             """,
             request.Body);
         Assert.Equal("w7c2h5j9d3kx", invoice.Id);
@@ -63,6 +65,8 @@ public sealed class InvoiceAndLinkTests
         Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);
         Assert.Equal("https://velirapay.com/i/w7c2h5j9d3kx", invoice.HostedUrl);
         Assert.Equal("https://velirapay.com/i/w7c2h5j9d3kx/document", invoice.DocumentUrl);
+        Assert.Equal("https://example.com/orders/1042", invoice.SuccessUrl);
+        Assert.Null(invoice.CancelUrl);
         Assert.Equal([new InvoiceCharge("m2q7w4e9r1ty", "expired", "ETH")], invoice.Charges);
         Assert.Equal(Utc("2026-09-21T08:00:00Z"), invoice.SentAt);
         Assert.Null(invoice.PaidAt);

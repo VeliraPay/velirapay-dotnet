@@ -31,6 +31,8 @@ public sealed class Invoice : ApiResource
         PaidAt = JsonValues.Date(data, "paid_at");
         VoidedAt = JsonValues.Date(data, "voided_at");
         CreatedAt = JsonValues.Date(data, "created_at");
+        SuccessUrl = JsonValues.NullableString(data, "success_url");
+        CancelUrl = JsonValues.NullableString(data, "cancel_url");
     }
 
     /// <summary>The invoice's public code, also the last segment of its hosted URL.</summary>
@@ -89,6 +91,12 @@ public sealed class Invoice : ApiResource
 
     /// <summary>When it was created.</summary>
     public DateTimeOffset? CreatedAt { get; }
+
+    /// <summary>The page the customer is offered a button back to once they have paid; absent from webhooks.</summary>
+    public string? SuccessUrl { get; }
+
+    /// <summary>The page the customer can go back to from the invoice without paying; absent from webhooks.</summary>
+    public string? CancelUrl { get; }
 
     /// <summary>Whether the invoice can still be paid.</summary>
     public bool IsOpen => Status == InvoiceStatus.Open;

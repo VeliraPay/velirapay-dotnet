@@ -237,6 +237,7 @@ var invoice = await velirapay.Invoices.CreateAsync(new InvoiceCreateOptions
         new InvoiceItemOptions { Description = "Hosting", Quantity = 1, UnitAmount = 250.00m },
     ],
     DueAt = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+    SuccessUrl = "https://example.com/orders/1042",
     SendEmail = true,
 });
 
@@ -445,7 +446,7 @@ The charge and invoice in a delivery are not quite the ones the API answers with
 
 - A charge's coin amounts and exchange rate carry all 18 decimal places (`0.002500000000000000` rather than `0.0025`); as `decimal` values they compare equal.
 - A charge has no `Timeline`, `Refunds`, `CheckoutUrl` or `ReceiptUrl`. Its payment link and invoice come with their title and number, as `charge.PaymentLinkTitle` and `charge.InvoiceNumber`, which the API's own answers leave out.
-- An invoice has no `Overdue` or `DocumentUrl`; both are `null`.
+- An invoice has no `Overdue`, `DocumentUrl`, `SuccessUrl` or `CancelUrl`; all four are `null`.
 - `charge.refunded` carries no refund. Read it from the event, with `(await velirapay.Events.RetrieveAsync(webhookEvent.EventId!)).Details`, which holds its `amount`, and `txid` and `reason` when you gave them.
 
 To test your handler, sign a payload yourself: `Webhook.GenerateSignatureHeader(payload, "whsec_test")` gives the header VeliraPay would send.
