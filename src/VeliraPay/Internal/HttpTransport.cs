@@ -43,9 +43,9 @@ internal sealed class HttpTransport
     {
         method = Normalize(method);
 
-        if (idempotencyKey is not null && (idempotencyKey.Length == 0 || !ParamsEncoder.IsHeaderSafe(idempotencyKey, allowSpaces: true)))
+        if (idempotencyKey is not null && (string.IsNullOrWhiteSpace(idempotencyKey) || !ParamsEncoder.IsHeaderSafe(idempotencyKey, allowSpaces: true)))
         {
-            throw new InvalidArgumentException("The idempotency key cannot be sent as a header: it must be printable ASCII text, such as \"order-1042-attempt-1\", and not empty.");
+            throw new InvalidArgumentException("The idempotency key cannot be sent as a header: it must be printable ASCII text, such as \"order-1042-attempt-1\", and not blank.");
         }
 
         // A retried write must not be carried out twice, so every attempt carries the same key.

@@ -177,6 +177,7 @@ public sealed class ClientTests
 
     [Theory]
     [InlineData("")]
+    [InlineData("   ")]
     [InlineData("order-1042\r\nX-Injected: 1")]
     [InlineData("commande-n°7")]
     public async Task AnIdempotencyKeyThatCannotBeAHeaderIsRefusedBeforeAnythingIsSent(string idempotencyKey)

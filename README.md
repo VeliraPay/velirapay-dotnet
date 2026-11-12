@@ -766,7 +766,7 @@ What the API does with a key:
 - Reuse a key only to retry the same request. A new attempt needs a new key: a charge replacing one that expired, under the key of the first, would get the expired charge back for a day. Hence keys such as `order-1042-attempt-1`, not the bare order number.
 - A key covers one account, one mode, one method and one path, and every API key of that account and mode shares it. Reusing it with a different body or query string throws a `ConflictException`.
 - A request holds its key for up to 60 seconds while it is processed; another one with the same key in that time gets a 409 with `Retry-After: 1`, which the library waits out and retries.
-- A key is at most 255 characters of printable ASCII.
+- A key is at most 255 characters of printable ASCII, and not blank.
 
 An answer that carries a secret is never stored: creating an API key (`ApiKeys.CreateAsync()`) and adding a webhook endpoint (`WebhookEndpoints.CreateAsync()`) or rotating its secret (`RotateSecretAsync()`) succeed once, and a repeat with the same key, the library's own retry after a lost answer included, throws a `ConflictException` whose `WasReplayed` is true. The write landed, but its secret is gone, so recover rather than repeat with a new key:
 

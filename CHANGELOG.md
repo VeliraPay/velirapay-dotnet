@@ -15,6 +15,7 @@ All notable changes to this library are documented here. It follows [Semantic Ve
 - The README covers the whole API, as the PHP library's does: the coins on offer and the lowest price per currency, charges with customer details and coupons, the network surcharge, short and late payments, invoices, payment links, coupons, payouts and payout addresses, events, webhook endpoints, the account and its payment settings, the overview, the activity log, API keys, members and invitations, Pro, and the constants.
 - The README's webhook handler no longer throws on a charge without an `order_id`, such as one made on a payment link, in the dashboard or to pay an invoice, and leaves out the samples "Send test event" sends. It and the docs of `RequestOptions.IdempotencyKey` and `Charges.CreateAsync()` suggest a key per attempt, such as `order-1042-attempt-1`: a bare order number would hand a customer who replaces an expired charge the expired one back, for a day.
 - Cloudflare's 520 to 524, its answers when it gets nothing from VeliraPay, are retried like 502, 503 and 504, reads and writes alike, since a retried write carries the same idempotency key.
+- An idempotency key made only of spaces throws an `InvalidArgumentException` before anything is sent, as an empty one already did. It went out as it was, which HTTP reads as an empty header and the API as no key, so a retried write could have been carried out twice.
 
 ## 0.1.0 - 2026-11-12
 
