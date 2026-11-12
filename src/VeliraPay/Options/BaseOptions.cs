@@ -19,7 +19,10 @@ public abstract class BaseOptions
 
     /// <summary>Send a parameter this version of the library has no property for, under the name the API gives it.</summary>
     /// <param name="name">The parameter's name, such as "description".</param>
-    /// <param name="value">A string, number, decimal, boolean, <see cref="DateTimeOffset"/>, <see cref="DateOnly"/>, list, dictionary, options object or JSON value, or null.</param>
+    /// <param name="value">
+    /// A string, number, decimal, boolean, <see cref="DateTimeOffset"/>, <see cref="DateOnly"/>, list, dictionary, options object or JSON value, or null.
+    /// A decimal goes as a string, as amounts should; a double or a float goes as a JSON number, written without an exponent.
+    /// </param>
     public void AddExtraParam(string name, object? value)
     {
         if (string.IsNullOrWhiteSpace(name))

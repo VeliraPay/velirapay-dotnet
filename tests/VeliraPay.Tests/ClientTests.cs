@@ -171,6 +171,7 @@ public sealed class ClientTests
         await Assert.ThrowsAsync<InvalidArgumentException>(() => Client(http).RequestAsync(HttpMethod.Post, "/v1/charges", circular));
         await Assert.ThrowsAsync<InvalidArgumentException>(() => Client(http).RequestAsync(HttpMethod.Post, "/v1/charges", new Dictionary<string, object?> { ["at"] = DateTime.UtcNow }));
         await Assert.ThrowsAsync<InvalidArgumentException>(() => Client(http).RequestAsync(HttpMethod.Post, "/v1/charges", new Dictionary<string, object?> { ["amount"] = double.NaN }));
+        await Assert.ThrowsAsync<InvalidArgumentException>(() => Client(http).RequestAsync(HttpMethod.Get, "/v1/charges", new Dictionary<string, object?> { ["min"] = float.PositiveInfinity }));
         Assert.Empty(http.Requests);
     }
 

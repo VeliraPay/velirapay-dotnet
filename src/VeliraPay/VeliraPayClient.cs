@@ -186,7 +186,10 @@ public sealed class VeliraPayClient
     /// <summary>Send a request to an endpoint this library has no method for yet.</summary>
     /// <param name="method">The HTTP method.</param>
     /// <param name="path">The path, such as "/v1/charges".</param>
-    /// <param name="parameters">The query string of a GET request, and the JSON body of any other; null values are left out of a query string. Decimals are sent as strings.</param>
+    /// <param name="parameters">
+    /// The query string of a GET request, and the JSON body of any other; null values are left out of a query string.
+    /// Decimals are sent as strings, as amounts should be, doubles and floats as numbers without an exponent, and times in UTC.
+    /// </param>
     /// <param name="requestOptions">The idempotency key of a request that changes something.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>The successful response; <see cref="ApiResponse.Json"/> decodes it.</returns>

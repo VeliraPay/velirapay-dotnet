@@ -9,6 +9,7 @@ All notable changes to this library are documented here. It follows [Semantic Ve
 - `Page<T>.Meta`, everything a list's answer said under `meta`, with `Mode`, the key's mode that the coins on offer and the activity log name, and `Currencies`, the currencies prices can be given in, which the coins on offer carry. `PayoutAddresses.ListAsync()` and `Payouts.SummaryAsync()` still answer with plain lists, whose answers' meta `LastResponse` holds; the mode is `VeliraPayClient.Mode`, and whether an owner lets API keys change payout addresses is `Account.ApiPayoutAddressChanges`.
 - `Charge.PaymentLinkTitle` and `Charge.InvoiceNumber`, which the charges in webhooks carry beside the link's and the invoice's ids. They are null in the API's own answers, which give the ids alone.
 - A `DateTimeOffset` is sent in UTC, so it means the same moment on the server whatever its offset. It used to go with its own offset, and the charges list read `CreatedFrom` and `CreatedTo` at their time of day as if it were UTC, hours off for any other offset. A `DateOnly` still goes as the day itself.
+- A `double` or a `float` given through `AddExtraParam()` or `RequestAsync()` is written without an exponent, as `0.00005` rather than `5E-05`, which the API's decimal fields refuse in a query string. Every amount property is a `decimal`, sent as a decimal string as before; give amounts as `decimal` there too.
 
 ## 0.1.0 - 2026-11-12
 

@@ -187,6 +187,60 @@ public sealed class PaginationAndOptionsTests
     }
 
     [Fact]
+    public async Task ADoubleOrAFloatIsSentWithoutAnExponent()
+    {
+        var http = new MockHttp().Json(Data(Fixture("charge")), 201).Json(ListResponse([]));
+        var client = Client(http);
+        var options = new ChargeCreateOptions { Asset = Asset.BTC, Amount = 1m, Currency = Currency.USD };
+        options.AddExtraParam("small", 0.00005);
+        options.AddExtraParam("float", 1.5e-7f);
+        options.AddExtraParam("large", 1e21);
+        options.AddExtraParam("negative", -2.5e-6);
+        options.AddExtraParam("plain", 49.9);
+
+        await client.Charges.CreateAsync(options);
+
+        Assert.Equal(
+            """{"asset":"BTC","amount":"1","currency":"USD","small":0.00005,"float":0.00000015,"large":1000000000000000000000,"negative":-0.0000025,"plain":49.9}""",
+            http.LastRequest.Body);
+
+        var listOptions = new ChargeListOptions();
+        listOptions.AddExtraParam("min", 0.00005);
+        listOptions.AddExtraParam("max", 2.5e-7f);
+        listOptions.AddExtraParam("raw", JsonDocument.Parse("5E-05").RootElement.Clone());
+        await client.Charges.ListAsync(listOptions);
+
+        Assert.Equal("min=0.00005&max=0.00000025&raw=0.00005", http.LastRequest.Query);
+    }
+
+    [Theory]
+    [InlineData(0.00005, "0.00005")]
+    [InlineData(1e-7, "0.0000001")]
+    [InlineData(-2.5e-6, "-0.0000025")]
+    [InlineData(1e21, "1000000000000000000000")]
+    [InlineData(1.2345678901234569e23, "123456789012345690000000")]
+    [InlineData(12.5, "12.5")]
+    [InlineData(0d, "0")]
+    public void ADoubleIsWrittenOutInFull(double value, string written)
+    {
+        Assert.Equal(written, ParamsEncoder.Number(value));
+    }
+
+    [Fact]
+    public void TheSmallestAndLargestDoublesAreWrittenOutInFullAndReadBackTheSame()
+    {
+        foreach (var value in new[] { double.Epsilon, -double.Epsilon, double.MaxValue, double.MinValue })
+        {
+            var written = ParamsEncoder.Number(value);
+
+            Assert.DoesNotContain("E", written, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(value, double.Parse(written, System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        Assert.Equal("0.00005", ParamsEncoder.Number(0.00005f));
+    }
+
+    [Fact]
     public void AResourceIsReadOnlyFromAJsonObject()
     {
         Assert.Throws<InvalidArgumentException>(() => new Charge(Element(Json("""["not","an","object"]"""))));

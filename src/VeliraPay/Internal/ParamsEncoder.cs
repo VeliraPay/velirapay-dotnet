@@ -58,6 +58,12 @@ internal static class ParamsEncoder
     /// </summary>
     public static string Amount(decimal value) => value.ToString("0.############################", CultureInfo.InvariantCulture);
 
+    /// <summary>A double in the shortest form that reads back as the same double, written out without an exponent: 0.00005, never 5E-05, which the API's decimal fields refuse.</summary>
+    public static string Number(double value) => WithoutExponent(Finite(value).ToString("R", CultureInfo.InvariantCulture));
+
+    /// <summary>A float in the shortest form that reads back as the same float, written out without an exponent: 0.00005, never 5E-05.</summary>
+    public static string Number(float value) => WithoutExponent((float.IsFinite(value) ? value : throw NotFinite()).ToString("R", CultureInfo.InvariantCulture));
+
     /// <summary>Write the entries of an object.</summary>
     private static void WriteObject(Utf8JsonWriter writer, IEnumerable<KeyValuePair<string, object?>> entries, int depth)
     {
@@ -100,8 +106,11 @@ internal static class ParamsEncoder
             case uint or ulong:
                 writer.WriteNumberValue(Convert.ToUInt64(value, CultureInfo.InvariantCulture));
                 break;
-            case double or float:
-                writer.WriteNumberValue(Finite(Convert.ToDouble(value, CultureInfo.InvariantCulture)));
+            case double number:
+                writer.WriteRawValue(Number(number));
+                break;
+            case float number:
+                writer.WriteRawValue(Number(number));
                 break;
             case DateTimeOffset timestamp:
                 writer.WriteStringValue(Timestamp(timestamp));
@@ -165,8 +174,11 @@ internal static class ParamsEncoder
             case int or long or short or sbyte or byte or ushort or uint or ulong:
                 pairs.Add($"{Uri.EscapeDataString(name)}={Convert.ToString(value, CultureInfo.InvariantCulture)}");
                 return;
-            case double or float:
-                pairs.Add($"{Uri.EscapeDataString(name)}={Uri.EscapeDataString(Finite(Convert.ToDouble(value, CultureInfo.InvariantCulture)).ToString("R", CultureInfo.InvariantCulture))}");
+            case double number:
+                pairs.Add($"{Uri.EscapeDataString(name)}={Number(number)}");
+                return;
+            case float number:
+                pairs.Add($"{Uri.EscapeDataString(name)}={Number(number)}");
                 return;
             case DateTimeOffset timestamp:
                 pairs.Add($"{Uri.EscapeDataString(name)}={Uri.EscapeDataString(Timestamp(timestamp))}");
@@ -238,8 +250,38 @@ internal static class ParamsEncoder
     }
 
     /// <summary>A number JSON can carry.</summary>
-    private static double Finite(double value)
-        => double.IsFinite(value) ? value : throw new InvalidArgumentException("The request could not be encoded as JSON: NaN and infinity are not numbers JSON can carry.");
+    private static double Finite(double value) => double.IsFinite(value) ? value : throw NotFinite();
+
+    /// <summary>The exception for NaN and infinity.</summary>
+    private static InvalidArgumentException NotFinite() => new("The request could not be encoded as JSON: NaN and infinity are not numbers JSON can carry.");
+
+    /// <summary>Write a number given with an exponent, such as "-1.5E-07", out in full, as "-0.00000015"; one without is returned as it is.</summary>
+    private static string WithoutExponent(string number)
+    {
+        var exponentAt = number.IndexOfAny(['E', 'e']);
+
+        if (exponentAt < 0)
+        {
+            return number;
+        }
+
+        var exponent = int.Parse(number.AsSpan(exponentAt + 1), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+        var mantissa = number[..exponentAt];
+        var sign = mantissa.StartsWith('-') ? "-" : string.Empty;
+        mantissa = mantissa.TrimStart('-');
+
+        var point = mantissa.IndexOf('.', StringComparison.Ordinal);
+        var digits = point < 0 ? mantissa : mantissa.Remove(point, 1);
+
+        // Where the decimal point falls among the digits once the exponent has moved it.
+        var integerDigits = (point < 0 ? mantissa.Length : point) + exponent;
+
+        var written = integerDigits <= 0 ? $"0.{new string('0', -integerDigits)}{digits}"
+            : integerDigits >= digits.Length ? digits + new string('0', integerDigits - digits.Length)
+            : $"{digits[..integerDigits]}.{digits[integerDigits..]}";
+
+        return sign + written;
+    }
 
     /// <summary>The exception for parameters that nest too deeply.</summary>
     private static InvalidArgumentException TooDeep()
