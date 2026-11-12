@@ -208,6 +208,74 @@ public sealed class AccountTests
         Assert.Equal(1, overview.OpenInvoices);
         Assert.Equal(0, overview.OverdueInvoices);
         Assert.Equal(20, overview.Get("funnel")?.GetProperty("started").GetInt32());
+        Assert.Equal(20, overview.Funnel.Started);
+        Assert.Equal(0, overview.Funnel.Paid);
+        Assert.Empty(overview.Funnel.Assets);
+        Assert.Equal(new OverviewPeriod(), overview.Period);
+        Assert.Empty(overview.Attention.UnderpaidCharges);
+        Assert.Empty(overview.Attention.LatePayments);
+        Assert.Empty(overview.Attention.PayoutsWaitingForAddress);
+        Assert.Equal(0, overview.Attention.FailingWebhookEndpoints);
+        Assert.Empty(overview.Assets);
+        Assert.Empty(overview.TopPaymentLinks);
+        Assert.Equal(new OverviewSetup(), overview.Setup);
+        Assert.Empty(overview.Daily);
+        Assert.Null(overview.Mode);
+    }
+
+    [Fact]
+    public async Task TheOverviewsFunnelAttentionCoinsLinksSetupAndDaysAreReadIntoTypedProperties()
+    {
+        var http = new MockHttp().Json(Fixture("overview"));
+
+        var overview = await Client(http, "vp_live_secret").Overview.RetrieveAsync();
+
+        Assert.Equal("/v1/overview", http.LastRequest.Path);
+        Assert.Equal(Mode.Live, overview.Mode);
+        Assert.Equal(new OverviewPeriod { From = new DateOnly(2026, 10, 14), To = new DateOnly(2026, 11, 12) }, overview.Period);
+
+        var funnel = overview.Funnel;
+        Assert.Equal((20, 12, 2, 5, 1), (funnel.Started, funnel.Paid, funnel.Waiting, funnel.Abandoned, funnel.Incomplete));
+        Assert.Equal(
+            [
+                new OverviewFunnelAsset { Asset = Asset.BTC, Started = 12, Paid = 8, Abandoned = 3 },
+                new OverviewFunnelAsset { Asset = Asset.USDT_TRON, Started = 8, Paid = 4, Abandoned = 2 },
+            ],
+            funnel.Assets);
+
+        var attention = overview.Attention;
+        var underpaid = Assert.Single(attention.UnderpaidCharges);
+        Assert.Equal(new OverviewChargeAmount { Id = "u7p3a1d9e2rx", Asset = Asset.BTC, Amount = 0.0025m, ReceivedAmount = 0.002m }, underpaid);
+        Assert.Equal("0.002000000000000000", underpaid.ReceivedAmount.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        Assert.Equal([new OverviewChargeAmount { Id = "l4t3p9a2y8mn", Asset = Asset.ETH, Amount = 0.05m, ReceivedAmount = 0.05m }], attention.LatePayments);
+        Assert.Equal([new OverviewWaitingPayouts { Asset = Asset.SOL, Count = 2 }], attention.PayoutsWaitingForAddress);
+        Assert.Equal(1, attention.FailingWebhookEndpoints);
+
+        Assert.Equal(
+            [
+                new OverviewAsset { Asset = Asset.BTC, PaidCharges = 8, SharePercent = 66.67m },
+                new OverviewAsset { Asset = Asset.USDT_TRON, PaidCharges = 4, SharePercent = 33.33m },
+            ],
+            overview.Assets);
+        Assert.Equal([new OverviewPaymentLink { Id = "p4n8r2t6y1ua", Title = "Pro plan", PaidCharges = 7 }], overview.TopPaymentLinks);
+        Assert.Equal(new OverviewSetup { PayoutAddress = true, PaymentLink = true, PaidCharge = true, WebhookEndpoint = false, PublicProfile = true }, overview.Setup);
+        Assert.Equal(
+            [
+                new OverviewDay { Date = new DateOnly(2026, 11, 11), Volume = 0m, SentVolume = 0m, PaidCharges = 0 },
+                new OverviewDay { Date = new DateOnly(2026, 11, 12), Volume = 150.00m, SentVolume = 145.50m, PaidCharges = 1 },
+            ],
+            overview.Daily);
+        Assert.Equal("Pro plan", overview.Get("top_payment_links")?[0].GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public void AnOverviewBuiltWithoutItsMetaHasNoMode()
+    {
+        var overview = new Overview(Element(Fixture("overview")["data"]!));
+
+        Assert.Null(overview.Mode);
+        Assert.Equal(12, overview.PaidCharges);
+        Assert.Equal(Mode.Test, new Overview(Element(Fixture("overview")["data"]!), Element(Json("""{"mode":"test"}"""))).Mode);
     }
 
     [Fact]

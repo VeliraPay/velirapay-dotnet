@@ -5,6 +5,7 @@ All notable changes to this library are documented here. It follows [Semantic Ve
 ## Unreleased
 
 - Constants for more of the values the API names, as `static` classes of strings like `Asset`: `AddressNetwork`, the networks `PayoutAddresses.UpdateAsync()` and `DeleteAsync()` take (only those `PayoutAddresses.ListAsync()` returns can be set; the API answers the others with a 404), `CheckoutAppearance`, `WebhookDeliveryStatus`, `PlanName`, `AccountType`, `CheckoutLocale`, the checkout's eight languages with Arabic, and `ActivityAction`, every action of the activity log, `team.second_factor_requirement_changed` included. Plain strings keep working wherever these are taken or given.
+- The overview is typed whole: `Period` (`OverviewPeriod`, its first and last day), `Funnel` (`OverviewFunnel`, how the attempts to pay ended, per coin too as `OverviewFunnelAsset`), `Attention` (`OverviewAttention`: underpaid charges and late payments as `OverviewChargeAmount`, payouts waiting for an address as `OverviewWaitingPayouts`, and failing webhook endpoints), `Assets` (`OverviewAsset`), `TopPaymentLinks` (`OverviewPaymentLink`), `Setup` (`OverviewSetup`) and `Daily` (`OverviewDay`), with amounts as `decimal` and days as `DateOnly`, and `Mode`, the key's mode the answer names. `Get()` still reads them as the API sent them.
 
 ## 0.1.0 - 2026-11-12
 

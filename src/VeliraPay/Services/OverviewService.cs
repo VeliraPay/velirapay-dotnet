@@ -8,8 +8,12 @@ public sealed class OverviewService : Service
     {
     }
 
-    /// <summary>Retrieve the dashboard's figures for the last 30 days, in the API key's mode.</summary>
+    /// <summary>Retrieve the dashboard's figures for the last 30 days, in the API key's mode, with what needs attention now.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     public async Task<Overview> RetrieveAsync(CancellationToken cancellationToken = default)
-        => new(await RequestAsync(HttpMethod.Get, "/v1/overview", null, null, cancellationToken).ConfigureAwait(false));
+    {
+        var response = await RespondAsync(HttpMethod.Get, "/v1/overview", null, null, cancellationToken).ConfigureAwait(false);
+
+        return new Overview(Data(response), Meta(response));
+    }
 }
