@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/examples/">
+    <Project Path="examples/ChargeACustomer/ChargeACustomer.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/VeliraPay/VeliraPay.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VeliraPay.Tests/VeliraPay.Tests.csproj" />
+  </Folder>
+</Solution>

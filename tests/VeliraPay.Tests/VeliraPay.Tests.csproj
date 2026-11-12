@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <RootNamespace>VeliraPay.Tests</RootNamespace>
+        <!-- xUnit1051 asks for TestContext.Current.CancellationToken on every call; these tests answer from memory at once. -->
+        <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="xunit.v3" Version="4.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\VeliraPay\VeliraPay.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit" />
+        <Using Include="System.Text.Json" />
+        <Using Include="System.Text.Json.Nodes" />
+        <None Include="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>

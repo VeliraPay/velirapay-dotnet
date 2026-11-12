@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>VeliraPay</RootNamespace>
+        <AssemblyName>VeliraPay</AssemblyName>
+        <Version>0.1.0</Version>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <IsAotCompatible>true</IsAotCompatible>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageId>VeliraPay</PackageId>
+        <Title>VeliraPay</Title>
+        <Authors>VeliraPay</Authors>
+        <Company>VeliraPay</Company>
+        <Product>VeliraPay</Product>
+        <Description>The official .NET library for VeliraPay crypto payments (https://velirapay.com): charges, payment links, invoices, coupons, payouts, events and webhook verification, with no dependencies. API reference: https://velirapay.com/docs</Description>
+        <Copyright>Copyright (c) 2026 VeliraPay</Copyright>
+        <PackageProjectUrl>https://velirapay.com</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/VeliraPay/velirapay-dotnet</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageTags>velirapay;crypto;cryptocurrency;payments;payment-gateway;bitcoin;ethereum;solana;usdt;usdc;lightning;webhooks;sdk;api</PackageTags>
+        <PackageReleaseNotes>https://github.com/VeliraPay/velirapay-dotnet/blob/main/CHANGELOG.md</PackageReleaseNotes>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+        <None Include="..\..\icon.png" Pack="true" PackagePath="\" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="VeliraPay.Tests" />
+    </ItemGroup>
+
+</Project>
