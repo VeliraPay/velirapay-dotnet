@@ -193,10 +193,12 @@ var charge = await velirapay.Charges.CreateAsync(new ChargeCreateOptions
     },
 });
 
-var country = charge.Customer.Country; // "GB"; also Email, Name, IpAddress, UserAgent, Reference, Phone and Metadata
+var country = charge.Customer.Country; // "GB"; also Email, Name, IpAddress, IpCountry, IpAsn, IpNetwork, UserAgent, Reference, Phone and Metadata
 ```
 
 Every field is optional. The older `CustomerEmail` property still works.
+
+The customer also comes back with what VeliraPay works out from the IP address, which you cannot give: `IpCountry`, the country the hosted checkout placed it in, as an ISO 3166 two-letter code or `"T1"` for Tor (`null` for a charge created through the API), and `IpAsn` and `IpNetwork`, the number of the network it belongs to and who runs it, such as `24940` and `"Hetzner Online GmbH"`. A customer on a hosting company's network is often a bot or someone hiding behind a server, and a country that differs from the one they gave is worth a second look.
 
 ## Short and late payments
 

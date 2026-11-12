@@ -137,6 +137,9 @@ public sealed class ChargeTests
         Assert.Equal("ada@example.com", charge.Customer.Email);
         Assert.Equal("Ada Lovelace", charge.Customer.Name);
         Assert.Equal("203.0.113.7", charge.Customer.IpAddress);
+        Assert.Equal("GB", charge.Customer.IpCountry);
+        Assert.Equal(2856, charge.Customer.IpAsn);
+        Assert.Equal("British Telecommunications PLC", charge.Customer.IpNetwork);
         Assert.StartsWith("Mozilla/5.0 (Macintosh;", charge.Customer.UserAgent, StringComparison.Ordinal);
         Assert.Equal("cus_1042", charge.Customer.Reference);
         Assert.Equal("+44 20 7946 0958", charge.Customer.Phone);
@@ -215,6 +218,21 @@ public sealed class ChargeTests
         Assert.Equal("Ada Lovelace", charge.Customer.Name);
         Assert.Null(charge.Customer.IpAddress);
         Assert.Empty(charge.Customer.Metadata);
+    }
+
+    [Fact]
+    public async Task ACustomerSentWithoutTheIpCountryAndNetworkReadsThemAsNull()
+    {
+        var attributes = Fixture("charge");
+        attributes["customer"] = attributes["customer"]!.AsObject().Without("ip_country", "ip_asn", "ip_network");
+        var http = new MockHttp().Json(Data(attributes));
+
+        var charge = await Client(http).Charges.RetrieveAsync("k3v9x2m7q8wz");
+
+        Assert.Equal("203.0.113.7", charge.Customer.IpAddress);
+        Assert.Null(charge.Customer.IpCountry);
+        Assert.Null(charge.Customer.IpAsn);
+        Assert.Null(charge.Customer.IpNetwork);
     }
 
     [Fact]

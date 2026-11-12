@@ -37,11 +37,31 @@ public sealed class WebhookTests
         Assert.Equal(2, charge.Transactions[0].Confirmations);
         Assert.Equal(2, charge.Transactions[0].RequiredConfirmations);
         Assert.Equal("203.0.113.7", charge.Customer.IpAddress);
+        Assert.Equal("DE", charge.Customer.IpCountry);
+        Assert.Equal(24940, charge.Customer.IpAsn);
+        Assert.Equal("Hetzner Online GmbH", charge.Customer.IpNetwork);
         Assert.Equal("ada@example.com", charge.Customer.Email);
         Assert.Empty(charge.Customer.Metadata);
         Assert.Equal("1042", charge.Metadata["order_id"].GetString());
         Assert.Empty(charge.Refunds);
         Assert.Null(charge.CheckoutUrl);
+    }
+
+    [Fact]
+    public void ADeliveryWithoutTheIpCountryAndNetworkReadsThemAsNull()
+    {
+        var delivery = Fixture("webhook_charge");
+        var charge = delivery["data"]!["charge"]!.AsObject();
+        charge["customer"] = charge["customer"]!.AsObject().Without("ip_country", "ip_asn", "ip_network");
+        var payload = delivery.ToJsonString();
+
+        var parsed = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret).Charge;
+
+        Assert.NotNull(parsed);
+        Assert.Equal("203.0.113.7", parsed.Customer.IpAddress);
+        Assert.Null(parsed.Customer.IpCountry);
+        Assert.Null(parsed.Customer.IpAsn);
+        Assert.Null(parsed.Customer.IpNetwork);
     }
 
     [Fact]

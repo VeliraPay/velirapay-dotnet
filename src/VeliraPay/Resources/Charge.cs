@@ -247,6 +247,9 @@ public sealed class Customer : ApiResource
         Email = JsonValues.NullableString(data, "email");
         Name = JsonValues.NullableString(data, "name");
         IpAddress = JsonValues.NullableString(data, "ip_address");
+        IpCountry = JsonValues.NullableString(data, "ip_country");
+        IpAsn = JsonValues.NullableInt(data, "ip_asn");
+        IpNetwork = JsonValues.NullableString(data, "ip_network");
         UserAgent = JsonValues.NullableString(data, "user_agent");
         Reference = JsonValues.NullableString(data, "reference");
         Phone = JsonValues.NullableString(data, "phone");
@@ -262,6 +265,15 @@ public sealed class Customer : ApiResource
 
     /// <summary>The IP address the customer paid from, recorded by the checkout or given when the charge was created.</summary>
     public string? IpAddress { get; }
+
+    /// <summary>The country the hosted checkout placed the IP address in, as an ISO 3166 two-letter code, or T1 for Tor; null for a charge created through the API.</summary>
+    public string? IpCountry { get; }
+
+    /// <summary>The number of the network (autonomous system) the IP address belongs to, such as 24940.</summary>
+    public int? IpAsn { get; }
+
+    /// <summary>Who runs that network, such as an internet provider or a hosting company.</summary>
+    public string? IpNetwork { get; }
 
     /// <summary>The user agent of the browser the customer paid from.</summary>
     public string? UserAgent { get; }

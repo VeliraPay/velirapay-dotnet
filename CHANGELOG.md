@@ -2,6 +2,10 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- `Customer.IpCountry`, `IpAsn` and `IpNetwork`: what VeliraPay works out from the customer's IP address, in the API's answers and in webhooks alike. `IpCountry` is the country the hosted checkout placed the address in, as an ISO 3166 two-letter code or `T1` for Tor, and `null` for a charge created through the API; `IpAsn` is the number of the network (autonomous system) the address belongs to, an `int?`, and `IpNetwork` who runs it, such as `24940` and `"Hetzner Online GmbH"`. A customer on a hosting company's network is often a bot or someone hiding behind a server. They are read only, and `null` in a payload that leaves them out.
+
 ## 0.2.1 - 2026-11-12
 
 - `InvoiceCreateOptions.SuccessUrl` and `CancelUrl`: public https:// addresses the invoice's page and its charges' checkout offer the customer a way back to, a button once they have paid and a link while it is open. `Invoice.SuccessUrl` and `Invoice.CancelUrl` read them back, and are `null` in webhooks, which leave them out.
