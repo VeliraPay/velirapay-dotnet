@@ -15,7 +15,9 @@ public sealed class Charge : ApiResource
         Id = JsonValues.String(data, "id", JsonValues.String(data, "code"));
         Status = JsonValues.String(data, "status");
         PaymentLink = JsonValues.Reference(data, "payment_link");
+        PaymentLinkTitle = JsonValues.TryGet(data, "payment_link", out var paymentLink) ? JsonValues.NullableString(paymentLink, "title") : null;
         Invoice = JsonValues.Reference(data, "invoice");
+        InvoiceNumber = JsonValues.TryGet(data, "invoice", out var invoice) ? JsonValues.NullableString(invoice, "number") : null;
         Description = JsonValues.NullableString(data, "description");
         FiatAmount = JsonValues.Decimal(data, "fiat_amount");
         FiatCurrency = JsonValues.String(data, "fiat_currency");
@@ -58,8 +60,20 @@ public sealed class Charge : ApiResource
     /// <summary>The id of the payment link the charge was made through.</summary>
     public string? PaymentLink { get; }
 
+    /// <summary>
+    /// The title of the payment link the charge was made through, which webhooks carry beside its id;
+    /// null in the API's own answers, which give the id alone, and for a charge made without a link.
+    /// </summary>
+    public string? PaymentLinkTitle { get; }
+
     /// <summary>The id of the invoice the charge pays.</summary>
     public string? Invoice { get; }
+
+    /// <summary>
+    /// The number of the invoice the charge pays, such as "INV-0042", which webhooks carry beside its id;
+    /// null in the API's own answers, which give the id alone, and for a charge that pays no invoice.
+    /// </summary>
+    public string? InvoiceNumber { get; }
 
     /// <summary>The merchant's description of the charge.</summary>
     public string? Description { get; }

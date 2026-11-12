@@ -30,6 +30,9 @@ public sealed class WebhookTests
         Assert.Equal("k3v9x2m7q8wz", charge.Id);
         Assert.True(charge.IsPaid);
         Assert.Equal("p4n8r2t6y1ua", charge.PaymentLink);
+        Assert.Equal("Pro plan", charge.PaymentLinkTitle);
+        Assert.Null(charge.Invoice);
+        Assert.Null(charge.InvoiceNumber);
         Assert.Equal("0.002500000000000000", charge.AssetAmount.ToString(CultureInfo.InvariantCulture));
         Assert.Equal(2, charge.Transactions[0].Confirmations);
         Assert.Equal(2, charge.Transactions[0].RequiredConfirmations);
@@ -39,6 +42,22 @@ public sealed class WebhookTests
         Assert.Equal("1042", charge.Metadata["order_id"].GetString());
         Assert.Empty(charge.Refunds);
         Assert.Null(charge.CheckoutUrl);
+    }
+
+    [Fact]
+    public void AChargeThatPaysAnInvoiceCarriesItsNumber()
+    {
+        var delivery = Fixture("webhook_charge");
+        delivery["data"]!["charge"] = delivery["data"]!["charge"]!.AsObject().With(("payment_link", null), ("invoice", Json("""{"code":"w7c2h5j9d3kx","number":"INV-0042"}""")));
+        var payload = delivery.ToJsonString();
+
+        var charge = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret).Charge;
+
+        Assert.NotNull(charge);
+        Assert.Equal("w7c2h5j9d3kx", charge.Invoice);
+        Assert.Equal("INV-0042", charge.InvoiceNumber);
+        Assert.Null(charge.PaymentLink);
+        Assert.Null(charge.PaymentLinkTitle);
     }
 
     [Fact]

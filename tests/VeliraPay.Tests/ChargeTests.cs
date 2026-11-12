@@ -98,7 +98,9 @@ public sealed class ChargeTests
         Assert.False(charge.IsOpen);
         Assert.False(charge.IsPending || charge.IsUnderpaid || charge.IsExpired || charge.IsCanceled);
         Assert.Equal("p4n8r2t6y1ua", charge.PaymentLink);
+        Assert.Null(charge.PaymentLinkTitle);
         Assert.Null(charge.Invoice);
+        Assert.Null(charge.InvoiceNumber);
         Assert.Equal("Pro plan, 1 year", charge.Description);
         Assert.Equal(150.00m, charge.FiatAmount);
         Assert.Equal("150.00", charge.FiatAmount.ToString(CultureInfo.InvariantCulture));
