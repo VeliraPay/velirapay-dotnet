@@ -189,6 +189,7 @@ public sealed class VeliraPayClient
     /// <param name="parameters">
     /// The query string of a GET request, and the JSON body of any other; null values are left out of a query string.
     /// Decimals are sent as strings, as amounts should be, doubles and floats as numbers without an exponent, and times in UTC.
+    /// The API still reads a number under 0.0001 in a JSON body as one with an exponent, which its amount fields refuse, so give amounts as decimals.
     /// </param>
     /// <param name="requestOptions">The idempotency key of a request that changes something.</param>
     /// <param name="cancellationToken">Cancels the request.</param>

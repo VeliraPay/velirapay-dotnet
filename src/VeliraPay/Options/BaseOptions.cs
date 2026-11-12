@@ -22,6 +22,7 @@ public abstract class BaseOptions
     /// <param name="value">
     /// A string, number, decimal, boolean, <see cref="DateTimeOffset"/>, <see cref="DateOnly"/>, list, dictionary, options object or JSON value, or null.
     /// A decimal goes as a string, as amounts should; a double or a float goes as a JSON number, written without an exponent.
+    /// The API still reads a number under 0.0001 in a JSON body as one with an exponent, which its amount fields refuse, so give amounts as decimals.
     /// </param>
     public void AddExtraParam(string name, object? value)
     {
