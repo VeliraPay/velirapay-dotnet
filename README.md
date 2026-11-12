@@ -162,7 +162,7 @@ await velirapay.Charges.SendAsync("k3v9x2m7q8wz");
 await velirapay.Charges.CancelAsync("k3v9x2m7q8wz");
 ```
 
-`SendAsync()` needs a customer email and only works while the charge is pending, or it throws a `ConflictException`. Creating a charge with `SendEmail` but no customer email throws a `ValidationException` and creates nothing. A charge can be emailed once every 10 minutes, and an account can send 100 emails to customers an hour (10 until it has been paid in live mode), shared with the other accounts its owner owns: charges, invoices and refund notices together. Past either, a `RateLimitException` says how long to wait. In test mode, emails only go to members of your account.
+`SendAsync()` needs a customer email and only works while the charge is pending, or it throws a `ConflictException`. Creating a charge with `SendEmail` but no customer email throws a `ValidationException` and creates nothing. A charge can be emailed once every 10 minutes, and the accounts of one owner can send 100 emails to customers an hour between them, 10 until one of them has been paid in live mode: charges, invoices and refund notices together. Past either, a `RateLimitException` says how long to wait. In test mode, emails only go to members of your account.
 
 `Metadata` holds up to 20 keys of at most 40 characters each. Values are strings of at most 500 characters, numbers, booleans or `null`.
 
