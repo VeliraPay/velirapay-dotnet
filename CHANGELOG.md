@@ -2,7 +2,7 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 0.2.1 - 2026-11-12
 
 - `InvoiceCreateOptions.SuccessUrl` and `CancelUrl`: public https:// addresses the invoice's page and its charges' checkout offer the customer a way back to, a button once they have paid and a link while it is open. `Invoice.SuccessUrl` and `Invoice.CancelUrl` read them back, and are `null` in webhooks, which leave them out.
 
