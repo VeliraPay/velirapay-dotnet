@@ -10,6 +10,7 @@ All notable changes to this library are documented here. It follows [Semantic Ve
 - `Charge.PaymentLinkTitle` and `Charge.InvoiceNumber`, which the charges in webhooks carry beside the link's and the invoice's ids. They are null in the API's own answers, which give the ids alone.
 - A `DateTimeOffset` is sent in UTC, so it means the same moment on the server whatever its offset. It used to go with its own offset, and the charges list read `CreatedFrom` and `CreatedTo` at their time of day as if it were UTC, hours off for any other offset. A `DateOnly` still goes as the day itself.
 - A `double` or a `float` given through `AddExtraParam()` or `RequestAsync()` is written without an exponent, as `0.00005` rather than `5E-05`, which the API's decimal fields refuse in a query string. Every amount property is a `decimal`, sent as a decimal string as before; give amounts as `decimal` there too.
+- `ConflictException.WasReplayed`, read from the `Idempotent-Replayed` header. A write whose answer carries a secret, `ApiKeys.CreateAsync()`, `WebhookEndpoints.CreateAsync()` and `WebhookEndpoints.RotateSecretAsync()`, is never replayed: repeated with the same idempotency key after its answer was lost, as the library's own retry does, it throws a `ConflictException` whose `WasReplayed` is true. The key or the endpoint was created, or the secret rotated, but the secret is gone. Their docs and the README say how to recover.
 
 ## 0.1.0 - 2026-11-12
 

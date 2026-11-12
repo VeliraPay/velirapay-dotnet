@@ -122,8 +122,40 @@ public sealed class RetryTests
         var exception = await Assert.ThrowsAsync<ConflictException>(() => Transport(http, delays).RequestAsync(HttpMethod.Post, "/v1/charges", null, Body, "order-1042", default));
 
         Assert.Null(exception.RetryAfter);
+        Assert.False(exception.WasReplayed);
         Assert.Single(http.Requests);
         Assert.Empty(delays);
+    }
+
+    [Theory]
+    [InlineData("api key")]
+    [InlineData("webhook endpoint")]
+    [InlineData("secret rotation")]
+    public async Task AWriteWhoseLostAnswerCarriedASecretEndsInAReplayedConflictWhenRetried(string write)
+    {
+        var http = new MockHttp()
+            .Throw(new HttpRequestException("An error occurred while sending the request.", new IOException("The response ended prematurely.")))
+            .Json(
+                """{"message":"A request with this Idempotency-Key already succeeded. Its answer carried a secret, which is shown once and not kept, so it cannot be replayed."}""",
+                409,
+                ("Idempotent-Replayed", "true"));
+        var client = Client(http, maxRetries: 1, delays: delays);
+
+        var exception = await Assert.ThrowsAsync<ConflictException>(() => write switch
+        {
+            "api key" => client.ApiKeys.CreateAsync(new ApiKeyCreateOptions { Name = "Shop server" }),
+            "webhook endpoint" => client.WebhookEndpoints.CreateAsync(new WebhookEndpointCreateOptions { Url = "https://example.com/hooks", Events = [EventType.ChargePaid] }),
+            _ => client.WebhookEndpoints.RotateSecretAsync("12"),
+        });
+
+        Assert.True(exception.WasReplayed);
+        Assert.Null(exception.RetryAfter);
+        Assert.StartsWith("A request with this Idempotency-Key already succeeded.", exception.Message, StringComparison.Ordinal);
+        Assert.Equal(2, http.Requests.Count);
+        Assert.NotNull(http.Requests[0].Header("Idempotency-Key"));
+        Assert.Equal(http.Requests[0].Header("Idempotency-Key"), http.Requests[1].Header("Idempotency-Key"));
+        Assert.Equal(http.Requests[0].Body, http.Requests[1].Body);
+        Assert.Single(delays);
     }
 
     [Fact]

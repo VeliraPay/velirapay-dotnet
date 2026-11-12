@@ -29,10 +29,16 @@ public sealed class ApiKeyService : Service
         }
     }
 
-    /// <summary>Create a key in the API key's mode. Its <see cref="ApiKey.Key"/> holds the key itself, shown this once; leaving the permissions out gives full access.</summary>
+    /// <summary>
+    /// Create a key in the API key's mode. Its <see cref="ApiKey.Key"/> holds the key itself, shown this once; leaving the permissions out gives full access.
+    /// The answer is never replayed: when it is lost and the request is repeated with the same idempotency key, as a retry is, the call throws a
+    /// <see cref="ConflictException"/> whose <see cref="ConflictException.WasReplayed"/> is true. The key was created then, but the key itself is gone:
+    /// list the keys, revoke the one you never saw, and create another.
+    /// </summary>
     /// <param name="options">The key.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
+    /// <exception cref="ConflictException">The key was already created by an earlier request with the same idempotency key, whose answer was lost.</exception>
     public async Task<ApiKey> CreateAsync(ApiKeyCreateOptions options, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);

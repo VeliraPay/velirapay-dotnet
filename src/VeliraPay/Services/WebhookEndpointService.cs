@@ -38,10 +38,14 @@ public sealed class WebhookEndpointService : Service
     /// <summary>
     /// Add an endpoint and send it its verification challenge, which counts against the requests a minute that verifying, testing and retrying share.
     /// The answer carries its <see cref="WebhookEndpoint.Secret"/>, shown this once, and <see cref="WebhookEndpoint.VerificationError"/> while it has not answered.
+    /// The answer is never replayed: when it is lost and the request is repeated with the same idempotency key, as a retry is, the call throws a
+    /// <see cref="ConflictException"/> whose <see cref="ConflictException.WasReplayed"/> is true. The endpoint was added then, but its secret is gone:
+    /// list the endpoints and rotate the new one's secret, or delete it and add it again.
     /// </summary>
     /// <param name="options">The endpoint.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
+    /// <exception cref="ConflictException">The endpoint was already added by an earlier request with the same idempotency key, whose answer was lost.</exception>
     public async Task<WebhookEndpoint> CreateAsync(WebhookEndpointCreateOptions options, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -85,10 +89,14 @@ public sealed class WebhookEndpointService : Service
     /// <summary>
     /// Replace the endpoint's signing secret. The answer carries the new one, shown this once;
     /// the old one keeps signing for a day, until <see cref="WebhookEndpoint.PreviousSecretExpiresAt"/>.
+    /// The answer is never replayed: when it is lost and the request is repeated with the same idempotency key, as a retry is, the call throws a
+    /// <see cref="ConflictException"/> whose <see cref="ConflictException.WasReplayed"/> is true. The secret was rotated then, but the new one is gone:
+    /// rotate again and put the newest secret in place straight away, since the secret you hold stops signing as soon as you rotate again.
     /// </summary>
     /// <param name="id">The endpoint's id.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
+    /// <exception cref="ConflictException">The secret was already rotated by an earlier request with the same idempotency key, whose answer was lost.</exception>
     public async Task<WebhookEndpoint> RotateSecretAsync(string id, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
         => Endpoint(await RespondAsync(HttpMethod.Post, Path("/v1/webhook-endpoints/{id}/secret", id), null, requestOptions, cancellationToken).ConfigureAwait(false));
 
