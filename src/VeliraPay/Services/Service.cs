@@ -37,6 +37,7 @@ public abstract class Service
             JsonValues.TryGet(meta, "last_page", out var last) ? JsonValues.Integer(last) ?? currentPage : currentPage,
             JsonValues.TryGet(meta, "per_page", out var perPage) ? JsonValues.Integer(perPage) ?? data.Count : data.Count,
             JsonValues.TryGet(meta, "total", out var total) ? JsonValues.Integer(total) ?? data.Count : data.Count,
+            meta,
             (page, token) => PageAsync(path, WithPage(query, page), hydrate, token));
     }
 

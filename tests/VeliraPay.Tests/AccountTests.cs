@@ -283,7 +283,7 @@ public sealed class AccountTests
     {
         var bitcoin = Json("""{"object":"payout_address","network":"bitcoin","name":"Bitcoin","address":"bc1qexample","assets":["BTC"],"payouts_held_until":null,"updated_at":"2026-10-02T08:14:51.000000Z"}""").AsObject();
         var http = new MockHttp()
-            .Json(new JsonObject { ["data"] = new JsonArray(bitcoin.DeepClone(), bitcoin.With(("network", "evm"), ("name", "Ethereum"), ("address", null), ("assets", Json("""["ETH","USDT"]""")))), ["meta"] = Json("""{"mode":"live"}""") })
+            .Json(new JsonObject { ["data"] = new JsonArray(bitcoin.DeepClone(), bitcoin.With(("network", "evm"), ("name", "Ethereum"), ("address", null), ("assets", Json("""["ETH","USDT"]""")))), ["meta"] = Json("""{"mode":"live","api_payout_address_changes":true}""") })
             .Json(Data(bitcoin.With(("payouts_held_until", "2026-11-08T08:00:00.000000Z"))))
             .Json(Data(bitcoin.With(("address", null))));
         var client = Client(http);
@@ -298,8 +298,9 @@ public sealed class AccountTests
         Assert.Equal(Utc("2026-10-02T08:14:51Z"), addresses[0].UpdatedAt);
         Assert.Null(addresses[1].Address);
         Assert.Equal(["ETH", "USDT"], addresses[1].Assets);
+        Assert.True(client.LastResponse!.Json().GetProperty("meta").GetProperty("api_payout_address_changes").GetBoolean());
 
-        var updated = await client.PayoutAddresses.UpdateAsync("bitcoin", new PayoutAddressUpdateOptions { Address = "bc1qexample" });
+        var updated = await client.PayoutAddresses.UpdateAsync(AddressNetwork.Bitcoin, new PayoutAddressUpdateOptions { Address = "bc1qexample" });
 
         Assert.Equal(HttpMethod.Put, http.LastRequest.Method);
         Assert.Equal("/v1/payout-addresses/bitcoin", http.LastRequest.Path);
@@ -324,6 +325,9 @@ public sealed class AccountTests
 
         Assert.Equal("/v1/activity", http.LastRequest.Path);
         Assert.Equal("action=sensitive&from=2026-11-01&network=live", http.LastRequest.Query);
+        Assert.Equal(Mode.Live, page.Mode);
+        Assert.Equal(25, page.Meta.GetProperty("per_page").GetInt32());
+        Assert.Empty(page.Currencies);
         Assert.Equal("5", entry.Id);
         Assert.Equal("api_key.created", entry.Action);
         Assert.Equal("Created an API key", entry.Description);

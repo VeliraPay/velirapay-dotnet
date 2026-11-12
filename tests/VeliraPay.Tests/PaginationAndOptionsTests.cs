@@ -90,6 +90,22 @@ public sealed class PaginationAndOptionsTests
         Assert.Equal(1, page.LastPage);
         Assert.Equal(2, page.PerPage);
         Assert.Equal(2, page.Total);
+        Assert.Equal("{}", page.Meta.GetRawText());
+        Assert.Null(page.Mode);
+        Assert.Empty(page.Currencies);
+    }
+
+    [Fact]
+    public async Task APageKeepsWhatItsAnswerSaidUnderMeta()
+    {
+        var http = new MockHttp().Json(ListResponse([Fixture("charge")], currentPage: 1, lastPage: 2, perPage: 1, total: 2));
+
+        var page = await Client(http).Charges.ListAsync();
+
+        Assert.Equal(2, page.Meta.GetProperty("total").GetInt32());
+        Assert.Equal("https://api.velirapay.com/v1/charges", page.Meta.GetProperty("path").GetString());
+        Assert.Null(page.Mode);
+        Assert.Empty(page.Currencies);
     }
 
     [Fact]

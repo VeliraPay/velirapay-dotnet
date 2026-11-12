@@ -41,6 +41,9 @@ public sealed class CatalogueTests
         Assert.Equal("currency=EUR", http.LastRequest.Query);
         Assert.Equal(3, page.Count);
         Assert.False(page.HasMore);
+        Assert.Equal(Mode.Live, page.Mode);
+        Assert.Equal([Currency.USD, Currency.EUR], page.Currencies);
+        Assert.Equal(JsonValueKind.Array, page.Meta.GetProperty("currencies").ValueKind);
 
         var bitcoin = page[0];
         Assert.Equal("BTC", bitcoin.Id);
@@ -156,9 +159,11 @@ public sealed class CatalogueTests
              "meta": {"mode": "live"}}
             """);
 
-        var summary = await Client(http).Payouts.SummaryAsync();
+        var client = Client(http);
+        var summary = await client.Payouts.SummaryAsync();
 
         Assert.Equal("/v1/payouts/summary", http.LastRequest.Path);
+        Assert.Equal(Mode.Live, client.LastResponse!.Json().GetProperty("meta").GetProperty("mode").GetString());
         var row = Assert.Single(summary);
         Assert.Equal(Asset.BTC, row.Asset);
         Assert.Equal(3, row.Payouts);

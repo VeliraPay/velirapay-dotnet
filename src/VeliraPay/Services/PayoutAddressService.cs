@@ -8,7 +8,11 @@ public sealed class PayoutAddressService : Service
     {
     }
 
-    /// <summary>List where payouts go in the API key's mode: one entry per network with coins on offer, its address null while there is none.</summary>
+    /// <summary>
+    /// List where payouts go in the API key's mode: one entry per network with coins on offer, its address null while there is none.
+    /// The answer also says whether an owner lets API keys and AI apps change them, which <see cref="Account.ApiPayoutAddressChanges"/> gives too,
+    /// and <see cref="VeliraPayClient.LastResponse"/> holds the whole answer right after the call.
+    /// </summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     public async Task<IReadOnlyList<PayoutAddress>> ListAsync(CancellationToken cancellationToken = default)
         => [.. List(await RespondAsync(HttpMethod.Get, "/v1/payout-addresses", null, null, cancellationToken).ConfigureAwait(false)).Select(address => new PayoutAddress(address))];

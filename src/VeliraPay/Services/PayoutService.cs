@@ -35,7 +35,10 @@ public sealed class PayoutService : Service
         }
     }
 
-    /// <summary>Add up, per coin, what has been paid out, what is on its way and what is still owed.</summary>
+    /// <summary>
+    /// Add up, per coin, what has been paid out, what is on its way and what is still owed, in the API key's mode.
+    /// <see cref="VeliraPayClient.LastResponse"/> holds the whole answer right after the call.
+    /// </summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     public async Task<IReadOnlyList<PayoutSummary>> SummaryAsync(CancellationToken cancellationToken = default)
         => (await PageAsync("/v1/payouts/summary", [], row => new PayoutSummary(row), cancellationToken).ConfigureAwait(false)).Data;
