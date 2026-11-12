@@ -15,7 +15,10 @@ public static class EventType
     /// <summary>Less than the amount due arrived.</summary>
     public const string ChargeUnderpaid = "charge.underpaid";
 
-    /// <summary>A transfer arrived after the charge expired or was canceled, or topped up an underpaid one, for the merchant to accept.</summary>
+    /// <summary>
+    /// A transfer arrived after the charge expired or was canceled, or topped up an underpaid one after its rate lock ended, and waits for the merchant to accept it;
+    /// or it arrived on top of a charge already paid, and was counted automatically.
+    /// </summary>
     public const string ChargeLatePayment = "charge.late_payment";
 
     /// <summary>A refund was recorded against a charge.</summary>

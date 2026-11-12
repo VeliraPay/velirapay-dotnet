@@ -126,6 +126,6 @@ public sealed class PaymentLinkListOptions : ListOptions
     /// <summary>Only links in this state, one of the <see cref="PaymentLinkStatus"/> values.</summary>
     public string? Status { get => Get<string>("status"); set => Set("status", value); }
 
-    /// <summary>Part of a link's code or title.</summary>
+    /// <summary>Part of a link's title.</summary>
     public string? Search { get => Get<string>("search"); set => Set("search", value); }
 }

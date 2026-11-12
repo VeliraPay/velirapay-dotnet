@@ -12,7 +12,10 @@ public sealed class ChargeService : Service
 
     /// <summary>Charge a customer: create a charge with what you already know about them, and send them to its <see cref="Charge.CheckoutUrl"/>.</summary>
     /// <param name="options">The charge.</param>
-    /// <param name="requestOptions">An idempotency key, such as your order number, to make the call safe to repeat.</param>
+    /// <param name="requestOptions">
+    /// An idempotency key, such as your order number and the attempt ("order-1042-attempt-1"), to make the call safe to repeat.
+    /// A new attempt, such as replacing a charge that expired, needs a new key.
+    /// </param>
     /// <param name="cancellationToken">Cancels the request.</param>
     public async Task<Charge> CreateAsync(ChargeCreateOptions options, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
     {
