@@ -9,7 +9,7 @@ public sealed class RequestOptions
     /// such as a charge replacing one that expired, needs a new key, or it gets the old charge back, and a different body under the same key throws a <see cref="ConflictException"/>.
     /// The answers that carry a new API key or a webhook signing secret are the exception: they are never kept, so a repeat of <see cref="ApiKeyService.CreateAsync"/>,
     /// <see cref="WebhookEndpointService.CreateAsync"/> or <see cref="WebhookEndpointService.RotateSecretAsync"/> throws a <see cref="ConflictException"/> whose
-    /// <see cref="ConflictException.WasReplayed"/> is true, meaning the first one succeeded. Without one, the library makes one up per call while retries are on.
+    /// <see cref="ConflictException.WasReplayed"/> is true, meaning the first one succeeded. Without a key, the library makes one up per call while retries are on.
     /// </summary>
     public string? IdempotencyKey { get; set; }
 }
