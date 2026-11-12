@@ -129,6 +129,33 @@ public sealed class InvoiceAndLinkTests
     }
 
     [Fact]
+    public async Task TimesInAnotherOffsetAreSentAsTheSameMomentInUtc()
+    {
+        var http = new MockHttp().Json(Data(Fixture("payment_link")), 201).Json(Data(Fixture("coupon"))).Json(ListResponse([]));
+        var client = Client(http);
+
+        await client.PaymentLinks.CreateAsync(new PaymentLinkCreateOptions
+        {
+            Title = "Tip jar",
+            PricingType = PricingType.Open,
+            Currency = Currency.USD,
+            ExpiresAt = new DateTimeOffset(2027, 1, 1, 1, 30, 0, TimeSpan.FromHours(3)),
+        });
+
+        Assert.Equal("2026-12-31T22:30:00+00:00", http.LastRequest.Json!["expires_at"]!.GetValue<string>());
+
+        await client.Coupons.UpdateAsync("SPRING10", new CouponUpdateOptions { ExpiresAt = new DateTimeOffset(2026, 12, 31, 18, 59, 59, TimeSpan.FromHours(-5)) });
+
+        Assert.Equal("""{"expires_at":"2026-12-31T23:59:59+00:00"}""", http.LastRequest.Body);
+
+        var options = new ChargeListOptions { CreatedFrom = new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.FromHours(5.5)) };
+        options.AddExtraParam("since", new DateTimeOffset(2026, 11, 2, 0, 0, 0, TimeSpan.FromHours(-8)));
+        await client.Charges.ListAsync(options);
+
+        Assert.Equal(new Dictionary<string, string> { ["created_from"] = "2026-10-31T18:30:00+00:00", ["since"] = "2026-11-02T08:00:00+00:00" }, http.LastRequest.QueryParameters);
+    }
+
+    [Fact]
     public async Task APaymentLinkIsReadIntoTypedProperties()
     {
         var http = new MockHttp().Json(Data(Fixture("payment_link")));

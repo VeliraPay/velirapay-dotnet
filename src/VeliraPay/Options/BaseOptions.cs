@@ -2,7 +2,8 @@ namespace VeliraPay;
 
 /// <summary>
 /// The parameters of a request. Only the properties you set are sent, under the names the API gives them, in the order you set them;
-/// one set to null is sent as null, which clears that field. Amounts are decimals, sent as strings so no precision is lost.
+/// one set to null is sent as null, which clears that field. Amounts are decimals, sent as strings so no precision is lost,
+/// times are sent in UTC whatever their offset, and days as YYYY-MM-DD.
 /// </summary>
 public abstract class BaseOptions
 {

@@ -43,8 +43,11 @@ internal static class ParamsEncoder
         return string.Join('&', pairs);
     }
 
-    /// <summary>A timestamp as the API reads it, such as "2026-12-31T23:59:59+00:00".</summary>
-    public static string Timestamp(DateTimeOffset value) => value.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'sszzz", CultureInfo.InvariantCulture);
+    /// <summary>
+    /// A timestamp as the API reads it, in UTC, such as "2026-12-31T21:59:59+00:00" for 23:59:59 at +02:00,
+    /// so the server takes it for the same moment whatever offset it was given in.
+    /// </summary>
+    public static string Timestamp(DateTimeOffset value) => value.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'sszzz", CultureInfo.InvariantCulture);
 
     /// <summary>A day as the API reads it, such as "2026-10-15".</summary>
     public static string Day(DateOnly value) => value.ToString("yyyy'-'MM'-'dd", CultureInfo.InvariantCulture);

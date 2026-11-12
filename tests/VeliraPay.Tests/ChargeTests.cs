@@ -330,7 +330,7 @@ public sealed class ChargeTests
                 ["status"] = "paid",
                 ["payment_link"] = "p4n8r2t6y1ua",
                 ["created_from"] = "2026-10-01T00:00:00+00:00",
-                ["created_to"] = "2026-10-31T23:59:59+02:00",
+                ["created_to"] = "2026-10-31T21:59:59+00:00",
                 ["page"] = "2",
                 ["per_page"] = "1",
             },
