@@ -34,6 +34,9 @@ public sealed class WebhookTests
         Assert.Null(charge.Invoice);
         Assert.Null(charge.InvoiceNumber);
         Assert.Equal("0.002500000000000000", charge.AssetAmount.ToString(CultureInfo.InvariantCulture));
+        Assert.Equal(1.75m, charge.ProcessingTerms?.Percent);
+        Assert.Equal(10, charge.ProcessingTerms?.MaxForwardingPercent);
+        Assert.Null(charge.SwitchedFrom);
         Assert.Equal(2, charge.Transactions[0].Confirmations);
         Assert.Equal(2, charge.Transactions[0].RequiredConfirmations);
         Assert.Equal("203.0.113.7", charge.Customer.IpAddress);
@@ -78,6 +81,42 @@ public sealed class WebhookTests
         Assert.Equal("INV-0042", charge.InvoiceNumber);
         Assert.Null(charge.PaymentLink);
         Assert.Null(charge.PaymentLinkTitle);
+    }
+
+    [Fact]
+    public void AChargeQuotedAgainInTheCoinThatArrivedCarriesItsFirstQuoteUntrimmed()
+    {
+        var delivery = Fixture("webhook_charge").With(("event", "charge.late_payment"));
+        delivery["data"]!["charge"] = delivery["data"]!["charge"]!.AsObject().With(
+            ("status", "expired"),
+            ("fiat_amount", "10.99"),
+            ("fiat_currency", "USD"),
+            ("asset", "USDT_TRON"),
+            ("asset_amount", "13.490000000000000000"),
+            ("network_surcharge", "2.500000000000000000"),
+            ("exchange_rate", "1.000000000000000000"),
+            ("paid_at", null),
+            ("switched_from", Json("""{"asset":"TRX","asset_amount":"36.633334000000000000","exchange_rate":"0.300000000000000000","switched_at":"2026-11-14T12:05:49.000000Z"}""")));
+        var payload = delivery.ToJsonString();
+
+        var webhookEvent = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret);
+
+        Assert.True(webhookEvent.Is(EventType.ChargeLatePayment));
+        var charge = webhookEvent.Charge;
+        Assert.NotNull(charge);
+        Assert.Equal(Asset.USDT_TRON, charge.Asset);
+        Assert.Equal(13.49m, charge.AssetAmount);
+        Assert.Equal(2.50m, charge.NetworkSurcharge);
+        Assert.Equal(10.99m, charge.FiatAmount);
+        var first = charge.SwitchedFrom;
+        Assert.NotNull(first);
+        Assert.Equal(Asset.TRX, first.Asset);
+        Assert.Equal("36.633334000000000000", first.AssetAmount.ToString(CultureInfo.InvariantCulture));
+        Assert.Equal(36.633334m, first.AssetAmount);
+        Assert.Equal("0.300000000000000000", first.ExchangeRate.ToString(CultureInfo.InvariantCulture));
+        Assert.Equal(0.3m, first.ExchangeRate);
+        Assert.Equal(Utc("2026-11-14T12:05:49Z"), first.SwitchedAt);
+        Assert.Equal(1.75m, charge.ProcessingTerms?.Percent);
     }
 
     [Fact]
@@ -345,6 +384,7 @@ public sealed class WebhookTests
         Assert.True(webhookEvent.Test);
         Assert.Null(webhookEvent.EventId);
         Assert.Equal("testab12cd34", webhookEvent.Charge?.Id);
+        Assert.Null(webhookEvent.Charge?.ProcessingTerms);
     }
 
     [Fact]

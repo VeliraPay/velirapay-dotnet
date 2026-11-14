@@ -2,6 +2,11 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- `Charge.SwitchedFrom`, an `OriginalQuote` with `Asset`, `AssetAmount`, `ExchangeRate` and `SwitchedAt`: the quote a charge first had, when it was quoted again in the coin that arrived. TRX and USDT on Tron share deposit addresses, so a charge that expired or was canceled with nothing of its own coin while the other arrived is quoted again in that one: `Asset`, `AssetAmount`, `ExchangeRate` and `NetworkSurcharge` then describe the new coin, `FiatAmount` stays the same, and the transfer waits as a late payment (`charge.late_payment`) to accept, after which `charge.paid` follows in the new coin. A charge is quoted again at most once, so read the coin from each charge or webhook rather than the one it was created with. It is `null` for every other charge, and in a payload that leaves it out.
+- `Charge.ProcessingTerms`, with `Percent`, the processing fee fixed when the charge was quoted, a `decimal` such as `1.75`, and `MaxForwardingPercent`, an `int`, the most passing a managed payment on may cost in percent of the merchant's share, such as `10`. It is `null` for older charges, for VeliraPay's own billing and in a payload that leaves it out.
+
 ## 0.2.2 - 2026-11-12
 
 - `Customer.IpCountry`, `IpAsn` and `IpNetwork`: what VeliraPay works out from the customer's IP address, in the API's answers and in webhooks alike. `IpCountry` is the country the hosted checkout placed the address in, as an ISO 3166 two-letter code or `T1` for Tor, and `null` for a charge created through the API; `IpAsn` is the number of the network (autonomous system) the address belongs to, an `int?`, and `IpNetwork` who runs it, such as `24940` and `"Hetzner Online GmbH"`. A customer on a hosting company's network is often a bot or someone hiding behind a server. They are read only, and `null` in a payload that leaves them out.

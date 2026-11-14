@@ -122,6 +122,10 @@ public sealed class ChargeTests
         Assert.Equal(60000m, charge.ExchangeRate);
         Assert.Equal("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", charge.DepositAddress);
         Assert.Null(charge.NetworkSurcharge);
+        Assert.NotNull(charge.ProcessingTerms);
+        Assert.Equal(1.75m, charge.ProcessingTerms.Percent);
+        Assert.Equal(10, charge.ProcessingTerms.MaxForwardingPercent);
+        Assert.Null(charge.SwitchedFrom);
         Assert.Null(charge.PaymentRequest);
         var transaction = Assert.Single(charge.Transactions);
         Assert.Equal(0.0025m, transaction.Amount);
@@ -166,6 +170,53 @@ public sealed class ChargeTests
         Assert.Equal(Asset.BTC_LIGHTNING, lightning.Asset);
         Assert.Equal("lnbc25u1p...", lightning.PaymentRequest);
         Assert.Equal("9f86d081884c7d65", lightning.DepositAddress);
+    }
+
+    [Fact]
+    public async Task AChargeQuotedAgainInTheCoinThatArrivedKeepsItsFirstQuote()
+    {
+        var http = new MockHttp().Json(Data(Fixture("charge").With(
+            ("status", "expired"),
+            ("fiat_amount", "10.99"),
+            ("fiat_currency", "USD"),
+            ("asset", "USDT_TRON"),
+            ("asset_amount", "13.49"),
+            ("network_surcharge", "2.50"),
+            ("exchange_rate", "1"),
+            ("processing_terms", Json("""{"percent":"0.25","max_forwarding_percent":10}""")),
+            ("switched_from", Json("""{"asset":"TRX","asset_amount":"36.633334","exchange_rate":"0.3","switched_at":"2026-11-14T12:05:49.000000Z"}""")))));
+
+        var charge = await Client(http).Charges.RetrieveAsync("k3v9x2m7q8wz");
+
+        Assert.Equal(Asset.USDT_TRON, charge.Asset);
+        Assert.Equal(13.49m, charge.AssetAmount);
+        Assert.Equal(2.50m, charge.NetworkSurcharge);
+        Assert.Equal(1m, charge.ExchangeRate);
+        Assert.Equal(10.99m, charge.FiatAmount);
+        Assert.NotNull(charge.ProcessingTerms);
+        Assert.Equal(0.25m, charge.ProcessingTerms.Percent);
+        Assert.Equal(10, charge.ProcessingTerms.MaxForwardingPercent);
+        var first = charge.SwitchedFrom;
+        Assert.NotNull(first);
+        Assert.Equal(Asset.TRX, first.Asset);
+        Assert.Equal("36.633334", first.AssetAmount.ToString(CultureInfo.InvariantCulture));
+        Assert.Equal(0.3m, first.ExchangeRate);
+        Assert.Equal(Utc("2026-11-14T12:05:49Z"), first.SwitchedAt);
+        Assert.Equal("TRX", first.Get("asset")?.GetString());
+    }
+
+    [Fact]
+    public void AChargeWithoutProcessingTermsOrAFirstQuoteReadsThemAsNull()
+    {
+        var historical = new Charge(Element(Fixture("charge").With(("processing_terms", null), ("switched_from", null))));
+        var older = new Charge(Element(Fixture("charge").Without("processing_terms", "switched_from")));
+
+        Assert.Null(historical.ProcessingTerms);
+        Assert.Null(historical.SwitchedFrom);
+        Assert.Equal(JsonValueKind.Null, historical.Get("processing_terms")?.ValueKind);
+        Assert.Null(older.ProcessingTerms);
+        Assert.Null(older.SwitchedFrom);
+        Assert.Null(older.Get("switched_from"));
     }
 
     [Fact]

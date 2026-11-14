@@ -24,6 +24,8 @@ public sealed class Charge : ApiResource
         Asset = JsonValues.String(data, "asset");
         AssetAmount = JsonValues.Decimal(data, "asset_amount");
         NetworkSurcharge = JsonValues.NullableDecimal(data, "network_surcharge");
+        ProcessingTerms = JsonValues.NullableObject(data, "processing_terms", terms => new ProcessingTerms(terms));
+        SwitchedFrom = JsonValues.NullableObject(data, "switched_from", quote => new OriginalQuote(quote));
         ReceivedAmount = JsonValues.NullableDecimal(data, "received_amount");
         RemainingAmount = JsonValues.Decimal(data, "remaining_amount");
         Overpaid = JsonValues.Bool(data, "overpaid");
@@ -84,14 +86,29 @@ public sealed class Charge : ApiResource
     /// <summary>The fiat currency, such as "USD".</summary>
     public string FiatCurrency { get; }
 
-    /// <summary>The coin and network paid with, one of the <see cref="VeliraPay.Asset"/> values.</summary>
+    /// <summary>
+    /// The coin and network paid with, one of the <see cref="VeliraPay.Asset"/> values. It can change once, from TRX to USDT on Tron or back,
+    /// when the customer paid the charge's address in the other coin: see <see cref="SwitchedFrom"/>.
+    /// </summary>
     public string Asset { get; }
 
-    /// <summary>The exact amount of the coin to send, network surcharge included.</summary>
+    /// <summary>The exact amount of the coin to send, network surcharge included, in the charge's current coin.</summary>
     public decimal AssetAmount { get; }
 
     /// <summary>What of <see cref="AssetAmount"/> the customer pays on top of the price for the network, which VeliraPay keeps; null for a coin without one.</summary>
     public decimal? NetworkSurcharge { get; }
+
+    /// <summary>The processing fee and the most forwarding may cost, fixed when the charge was quoted; null for older charges and for VeliraPay's own billing.</summary>
+    public ProcessingTerms? ProcessingTerms { get; }
+
+    /// <summary>
+    /// The quote the charge first had, when it was quoted again in the coin that arrived; null for almost every charge.
+    /// TRX and USDT on Tron (USDT_TRON) share deposit addresses, so a charge that expired or was canceled with nothing of its own coin
+    /// while the other arrived is quoted again in that one: <see cref="Asset"/>, <see cref="AssetAmount"/>, <see cref="ExchangeRate"/>
+    /// and <see cref="NetworkSurcharge"/> then describe the new coin, <see cref="FiatAmount"/> stays the same, and the transfer waits as
+    /// a late payment to accept. A charge is quoted again at most once.
+    /// </summary>
+    public OriginalQuote? SwitchedFrom { get; }
 
     /// <summary>What has been credited so far, or null before anything arrived.</summary>
     public decimal? ReceivedAmount { get; }
@@ -108,7 +125,7 @@ public sealed class Charge : ApiResource
     /// <summary>The refunds recorded against the charge; absent from webhooks.</summary>
     public IReadOnlyList<Refund> Refunds { get; }
 
-    /// <summary>Fiat per one unit of the coin, locked when the charge was created.</summary>
+    /// <summary>Fiat per one unit of the coin, locked when the charge was quoted; for a charge quoted again in another coin, that coin's, with the first in <see cref="SwitchedFrom"/>.</summary>
     public decimal ExchangeRate { get; }
 
     /// <summary>The address the customer pays into, or the payment hash of the Lightning invoice for <see cref="VeliraPay.Asset.BTC_LIGHTNING"/>.</summary>
@@ -289,6 +306,56 @@ public sealed class Customer : ApiResource
 
     /// <summary>Anything else you gave about the customer.</summary>
     public IReadOnlyDictionary<string, JsonElement> Metadata { get; }
+}
+
+/// <summary>The processing fee and forwarding limit fixed when a charge was quoted.</summary>
+public sealed class ProcessingTerms : ApiResource
+{
+    /// <summary>Read processing terms from the JSON the API sent.</summary>
+    /// <param name="json">The terms, as a JSON object.</param>
+    public ProcessingTerms(JsonElement json)
+        : base(json)
+    {
+        var data = RawJson;
+
+        Percent = JsonValues.Decimal(data, "percent");
+        MaxForwardingPercent = JsonValues.Int(data, "max_forwarding_percent");
+    }
+
+    /// <summary>The processing fee, in percent of what the charge took in, network surcharge left out, such as 1.75.</summary>
+    public decimal Percent { get; }
+
+    /// <summary>The most passing a managed payment on to the payout address may cost, in percent of the merchant's share after the fee, such as 10.</summary>
+    public int MaxForwardingPercent { get; }
+}
+
+/// <summary>The quote a charge first had, before it was quoted again in the coin that arrived at its address.</summary>
+public sealed class OriginalQuote : ApiResource
+{
+    /// <summary>Read a charge's first quote from the JSON the API sent.</summary>
+    /// <param name="json">The quote, as a JSON object.</param>
+    public OriginalQuote(JsonElement json)
+        : base(json)
+    {
+        var data = RawJson;
+
+        Asset = JsonValues.String(data, "asset");
+        AssetAmount = JsonValues.Decimal(data, "asset_amount");
+        ExchangeRate = JsonValues.Decimal(data, "exchange_rate");
+        SwitchedAt = JsonValues.Date(data, "switched_at");
+    }
+
+    /// <summary>The coin the charge was first quoted in, one of the <see cref="VeliraPay.Asset"/> values.</summary>
+    public string Asset { get; }
+
+    /// <summary>The amount of that coin it first asked for, network surcharge included.</summary>
+    public decimal AssetAmount { get; }
+
+    /// <summary>Fiat per one unit of that coin, as first locked.</summary>
+    public decimal ExchangeRate { get; }
+
+    /// <summary>When the charge was quoted again in the coin that arrived.</summary>
+    public DateTimeOffset? SwitchedAt { get; }
 }
 
 /// <summary>A blockchain transfer into a charge's deposit address.</summary>

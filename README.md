@@ -170,6 +170,8 @@ The accounts of one owner can create 300 charges in each mode within 30 minutes,
 
 A charge in `Asset.BTC_LIGHTNING`, Bitcoin over Lightning where it is on offer, is paid to a Lightning invoice: `charge.PaymentRequest` holds it (BOLT11), and `DepositAddress` its payment hash. For every other coin `PaymentRequest` is `null`.
 
+`charge.ProcessingTerms` holds what was fixed when the charge was quoted: `Percent`, the processing fee in percent of what it takes in (such as `1.75`), and `MaxForwardingPercent`, the most that passing a managed payment on to your payout address may cost, in percent of your share (`10`). It is `null` for older charges and for VeliraPay's own billing.
+
 ### Customer details
 
 `charge.Customer` holds what is known about who pays, to help you spot fraud before you ship anything. When the customer starts the payment on the hosted checkout, VeliraPay records the IP address and browser they did it from. A charge you create from your server comes from your server rather than the customer, so give what you know:
@@ -222,6 +224,8 @@ var refunds = refunded.Refunds; // each with its Amount, Txid, Reason and Explor
 `AcceptAsync()` throws a `ConflictException` for any other charge, and for an underpaid one while a payment to it is still confirming. A refund of an underpaid charge or a late payment needs it accepted first, and the network surcharge is never refundable: `RecordRefundAsync()` throws a `ValidationException` otherwise.
 
 Each arrives as the `charge.late_payment` webhook: a transfer to an expired or canceled charge as soon as it is seen, and a late top-up to an underpaid charge once it has confirmed. A transfer on top of a charge already paid sends `charge.late_payment` too, but is counted automatically and waits for nothing.
+
+TRX and USDT on Tron (`Asset.USDT_TRON`) share deposit addresses. When a charge in one of them expired or was canceled with nothing of its own coin while the other arrived, VeliraPay quotes it again in the coin that arrived: `Asset`, `AssetAmount`, `ExchangeRate` and `NetworkSurcharge` then describe that coin, `FiatAmount` stays the same, and `charge.SwitchedFrom` keeps the first quote, with its `Asset`, `AssetAmount`, `ExchangeRate` and `SwitchedAt`. The transfer then waits as a late payment, and once you accept it `charge.paid` follows in the new coin. A charge is quoted again at most once, and `SwitchedFrom` is `null` for every other charge, so read the coin from each charge or webhook rather than remembering the one you created it with.
 
 ## Invoices
 
@@ -441,12 +445,13 @@ Some things to know:
 - **Skip duplicates by event.** A retried delivery keeps its id (`webhookEvent.Id`, the `X-VeliraPay-Delivery` header), but each endpoint gets its own copy of an event under its own id. `webhookEvent.EventId` is the same on every copy, and is the event's id in the events API, so `EventId ?? Id` is the key to remember.
 - **Fulfil once.** A paid invoice sends both `charge.paid`, for the charge that paid it, and `invoice.paid`. Fulfil on one of them.
 - **Deliveries can arrive out of order.** When the order matters, fetch the current state with `velirapay.Charges.RetrieveAsync(webhookEvent.Charge!.Id)`.
+- **Read the coin from each delivery.** A charge in TRX or USDT on Tron can be quoted again in the other coin once, so its `Asset` and amounts can differ from those it was created with; `charge.SwitchedFrom` then keeps the first quote ([Short and late payments](#short-and-late-payments)).
 
 `charge.payment_detected` arrives as soon as a transfer is seen, before it is confirmed: tell the customer, but do not fulfil. It and `charge.late_payment` carry that transfer as `webhookEvent.Transaction` ([Short and late payments](#short-and-late-payments)). `payout.sent` arrives when your share of a paid charge has been broadcast, and `payout.confirmed` when the chain has confirmed it; both carry the charge, and the payout as `webhookEvent.Payout`, the same object `Payouts.RetrieveAsync()` answers with. Book the money on `payout.confirmed`: a broadcast payout can still fail and go out again, so `payout.sent` can arrive more than once for a charge.
 
 The charge and invoice in a delivery are not quite the ones the API answers with:
 
-- A charge's coin amounts and exchange rate carry all 18 decimal places (`0.002500000000000000` rather than `0.0025`); as `decimal` values they compare equal.
+- A charge's coin amounts and exchange rate, those of `SwitchedFrom` included, carry all 18 decimal places (`0.002500000000000000` rather than `0.0025`); as `decimal` values they compare equal.
 - A charge has no `Timeline`, `Refunds`, `CheckoutUrl` or `ReceiptUrl`. Its payment link and invoice come with their title and number, as `charge.PaymentLinkTitle` and `charge.InvoiceNumber`, which the API's own answers leave out.
 - An invoice has no `Overdue`, `DocumentUrl`, `SuccessUrl` or `CancelUrl`; all four are `null`.
 - `charge.refunded` carries no refund. Read it from the event, with `(await velirapay.Events.RetrieveAsync(webhookEvent.EventId!)).Details`, which holds its `amount`, and `txid` and `reason` when you gave them.
