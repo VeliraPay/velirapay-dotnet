@@ -12,7 +12,7 @@ if (apiKey is null || !apiKey.StartsWith("vp_test_", StringComparison.Ordinal))
     return 1;
 }
 
-var velirapay = new VeliraPayClient(apiKey, new VeliraPayClientOptions { AppInfo = "velirapay-dotnet-example/0.2.2" });
+var velirapay = new VeliraPayClient(apiKey, new VeliraPayClientOptions { AppInfo = "velirapay-dotnet-example/0.2.3" });
 
 var charge = await velirapay.Charges.CreateAsync(new ChargeCreateOptions
 {
