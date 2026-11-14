@@ -10,7 +10,7 @@ public sealed class CatalogueTests
         {
             "id": "k3v9x2m7q8wz", "object": "payout", "charge": "k3v9x2m7q8wz", "status": "sent", "asset": "USDT",
             "gross_amount": "11.014175", "fee_percent": "3", "fee_amount": "0.330425", "fee_fiat_amount": "0.33", "fiat_currency": "USD", "exchange_rate": "0.9987",
-            "net_amount": "10.68375", "network_fee": "0.081611", "sent_amount": "10.602139",
+            "net_amount": "10.68375", "network_fee": "0.081611", "merchant_network_reserve": null, "sent_amount": "10.602139",
             "payout_address": "0x7099", "payout_txid": "0x9a4f", "explorer_url": "https://etherscan.io/tx/0x9a4f",
             "attempts": 1, "last_error": null, "next_attempt_at": null,
             "sent_at": "2026-11-02T20:58:00.000000Z", "confirmed_at": "2026-11-02T21:00:04.000000Z", "created_at": "2026-11-02T20:57:00.000000Z"
@@ -126,6 +126,7 @@ public sealed class CatalogueTests
         Assert.Equal(0.9987m, read.ExchangeRate);
         Assert.Equal(10.68375m, read.NetAmount);
         Assert.Equal(0.081611m, read.NetworkFee);
+        Assert.Null(read.MerchantNetworkReserve);
         Assert.Equal(10.602139m, read.SentAmount);
         Assert.Equal("0x7099", read.PayoutAddress);
         Assert.Equal("0x9a4f", read.PayoutTxid);
@@ -136,6 +137,58 @@ public sealed class CatalogueTests
         Assert.Equal(Utc("2026-11-02T20:58:00Z"), read.SentAt);
         Assert.Equal(Utc("2026-11-02T21:00:04Z"), read.ConfirmedAt);
         Assert.Equal(Utc("2026-11-02T20:57:00Z"), read.CreatedAt);
+    }
+
+    [Fact]
+    public async Task APayoutWithANetworkReserveSaysWhatWasSetAsideAndWhatIsLeft()
+    {
+        var http = new MockHttp().Json(Data(PayoutJson.With(
+            ("asset", "ETH"),
+            ("merchant_network_reserve", Json("""{"reserved":"0.0004","payout_cost":"0.00025","sweep_budget":"0.0001","sweep_cost":"0.00008","sweep_available":"0.00002","held":"0.00007","residual":"0.00007"}""")))));
+
+        var read = await Client(http).Payouts.RetrieveAsync("k3v9x2m7q8wz");
+
+        var reserve = read.MerchantNetworkReserve;
+        Assert.NotNull(reserve);
+        Assert.Equal(0.0004m, reserve.Reserved);
+        Assert.Equal(0.00025m, reserve.PayoutCost);
+        Assert.Equal(0.0001m, reserve.SweepBudget);
+        Assert.Equal(0.00008m, reserve.SweepCost);
+        Assert.Equal(0.00002m, reserve.SweepAvailable);
+        Assert.Equal(0.00007m, reserve.Held);
+        Assert.Equal(0.00007m, reserve.Residual);
+        Assert.Equal("0.0004", reserve.Get("reserved")?.GetString());
+    }
+
+    [Fact]
+    public void ANetworkReserveWhoseCostsAreStillOpenReadsThemAsNull()
+    {
+        var payout = new Payout(Element(PayoutJson.With(
+            ("asset", "ETH"),
+            ("status", "sending"),
+            ("merchant_network_reserve", Json("""{"reserved":"0.0004","payout_cost":null,"sweep_budget":"0.0001","sweep_cost":null,"sweep_available":"0.00001","held":"0.00001","residual":null}""")))));
+
+        var reserve = payout.MerchantNetworkReserve;
+        Assert.NotNull(reserve);
+        Assert.Equal(0.0004m, reserve.Reserved);
+        Assert.Null(reserve.PayoutCost);
+        Assert.Equal(0.0001m, reserve.SweepBudget);
+        Assert.Null(reserve.SweepCost);
+        Assert.Equal(0.00001m, reserve.SweepAvailable);
+        Assert.Equal(0.00001m, reserve.Held);
+        Assert.Null(reserve.Residual);
+    }
+
+    [Fact]
+    public void APayoutWithoutANetworkReserveReadsItAsNull()
+    {
+        var withNull = new Payout(Element(PayoutJson));
+        var without = new Payout(Element(PayoutJson.Without("merchant_network_reserve")));
+
+        Assert.Null(withNull.MerchantNetworkReserve);
+        Assert.Equal(JsonValueKind.Null, withNull.Get("merchant_network_reserve")?.ValueKind);
+        Assert.Null(without.MerchantNetworkReserve);
+        Assert.Null(without.Get("merchant_network_reserve"));
     }
 
     [Fact]

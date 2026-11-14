@@ -349,6 +349,8 @@ foreach (var coin in await velirapay.Payouts.SummaryAsync())
 }
 ```
 
+Your share pays the network costs of forwarding it. Where their exact amount is unknown when a payout goes out, for ETH and the other EVM chains' own coins, TRX and Lightning routing, an estimate is set aside from your share first, and `payout.MerchantNetworkReserve` says what became of it, in the payout's coin: `Reserved` is what was set aside, `PayoutCost` what forwarding cost, `SweepBudget` and `SweepCost` what was allowed for and spent sweeping VeliraPay's fee to its cold wallet afterwards, `SweepAvailable` what is left of that budget, `Held` what is still held for you, and `Residual` what was not used once every cost is known. `PayoutCost`, `SweepCost` and `Residual` are `null` until known. The residual stays owed to you and is recorded, not sent back on its own. `MerchantNetworkReserve` is `null` for older charges, Bitcoin, Litecoin, Dogecoin and Bitcoin Cash payouts, USDT and USDC paid out through forwarders, and payouts not sent yet.
+
 ## Payout addresses
 
 Payouts go to the address you keep for each network family, one per family and mode: `bitcoin`, `evm` for Ethereum and its tokens, `bsc` for BNB Chain, `tron` and so on, with constants in `AddressNetwork`.

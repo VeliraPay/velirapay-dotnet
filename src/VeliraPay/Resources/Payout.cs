@@ -24,6 +24,7 @@ public sealed class Payout : ApiResource
         ExchangeRate = JsonValues.NullableDecimal(data, "exchange_rate");
         NetAmount = JsonValues.Decimal(data, "net_amount");
         NetworkFee = JsonValues.NullableDecimal(data, "network_fee");
+        MerchantNetworkReserve = JsonValues.NullableObject(data, "merchant_network_reserve", reserve => new NetworkReserve(reserve));
         SentAmount = JsonValues.NullableDecimal(data, "sent_amount");
         PayoutAddress = JsonValues.NullableString(data, "payout_address");
         PayoutTxid = JsonValues.NullableString(data, "payout_txid");
@@ -72,6 +73,13 @@ public sealed class Payout : ApiResource
     /// <summary>What the chain charged, once it has been broadcast.</summary>
     public decimal? NetworkFee { get; }
 
+    /// <summary>
+    /// What was set aside from the merchant's share for network costs whose exact amount is unknown when the payout goes out:
+    /// ETH and the other EVM chains' own coins, TRX, and Lightning routing. Null for older charges, Bitcoin, Litecoin, Dogecoin
+    /// and Bitcoin Cash payouts, USDT and USDC paid out through forwarders, and payouts not sent yet.
+    /// </summary>
+    public NetworkReserve? MerchantNetworkReserve { get; }
+
     /// <summary>What reached the merchant, once it has been broadcast.</summary>
     public decimal? SentAmount { get; }
 
@@ -107,6 +115,50 @@ public sealed class Payout : ApiResource
 
     /// <summary>Whether the payout waits on an address or on a person.</summary>
     public bool IsManual => Status == PayoutStatus.Manual;
+}
+
+/// <summary>
+/// An estimate of network costs set aside from the merchant's share of a payout, in the payout's coin, and what became of it.
+/// What is left once every cost is known stays owed to the merchant and is recorded, not sent back on its own.
+/// </summary>
+public sealed class NetworkReserve : ApiResource
+{
+    /// <summary>Read a network reserve from the JSON the API sent.</summary>
+    /// <param name="json">The reserve, as a JSON object.</param>
+    public NetworkReserve(JsonElement json)
+        : base(json)
+    {
+        var data = RawJson;
+
+        Reserved = JsonValues.Decimal(data, "reserved");
+        PayoutCost = JsonValues.NullableDecimal(data, "payout_cost");
+        SweepBudget = JsonValues.Decimal(data, "sweep_budget");
+        SweepCost = JsonValues.NullableDecimal(data, "sweep_cost");
+        SweepAvailable = JsonValues.Decimal(data, "sweep_available");
+        Held = JsonValues.Decimal(data, "held");
+        Residual = JsonValues.NullableDecimal(data, "residual");
+    }
+
+    /// <summary>What was set aside when the payout went out.</summary>
+    public decimal Reserved { get; }
+
+    /// <summary>What forwarding the payout cost, or null until it is known.</summary>
+    public decimal? PayoutCost { get; }
+
+    /// <summary>What of <see cref="Reserved"/> was allowed for sweeping VeliraPay's fee to its cold wallet afterwards.</summary>
+    public decimal SweepBudget { get; }
+
+    /// <summary>What that sweep cost, or null until it is known.</summary>
+    public decimal? SweepCost { get; }
+
+    /// <summary>What is left of <see cref="SweepBudget"/>.</summary>
+    public decimal SweepAvailable { get; }
+
+    /// <summary>What is still held for the merchant, counting every cost not yet known at its most.</summary>
+    public decimal Held { get; }
+
+    /// <summary>What was not used once every cost is known, owed to the merchant; null while a cost is still open.</summary>
+    public decimal? Residual { get; }
 }
 
 /// <summary>What one coin adds up to across the account's payouts.</summary>

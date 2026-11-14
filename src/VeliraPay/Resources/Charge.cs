@@ -87,8 +87,8 @@ public sealed class Charge : ApiResource
     public string FiatCurrency { get; }
 
     /// <summary>
-    /// The coin and network paid with, one of the <see cref="VeliraPay.Asset"/> values. It can change once, from TRX to USDT on Tron or back,
-    /// when the customer paid the charge's address in the other coin: see <see cref="SwitchedFrom"/>.
+    /// The coin and network paid with, one of the <see cref="VeliraPay.Asset"/> values. It changes at most once: a charge in TRX or in USDT on Tron
+    /// is quoted again in the other of the two when that is what the customer paid its address in; see <see cref="SwitchedFrom"/>.
     /// </summary>
     public string Asset { get; }
 

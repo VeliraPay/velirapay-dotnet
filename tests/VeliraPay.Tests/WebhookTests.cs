@@ -155,6 +155,33 @@ public sealed class WebhookTests
         Assert.Equal(0.0000044m, payout.NetworkFee);
         Assert.Equal("cc9a3e0b5629235194a6174d805c55df5554c94e2b4de8dc584db2091cc5cacf", payout.PayoutTxid);
         Assert.Equal(Utc("2026-09-20T10:41:02Z"), payout.ConfirmedAt);
+        Assert.Null(payout.MerchantNetworkReserve);
+    }
+
+    [Fact]
+    public void APayoutDeliveryCarriesWhatWasSetAsideForNetworkCosts()
+    {
+        var delivery = Fixture("webhook_payout").With(("event", "payout.sent"));
+        delivery["data"]!["charge"] = delivery["data"]!["charge"]!.AsObject().With(("asset", "ETH"));
+        delivery["data"]!["payout"] = delivery["data"]!["payout"]!.AsObject().With(
+            ("status", "sending"),
+            ("asset", "ETH"),
+            ("confirmed_at", null),
+            ("merchant_network_reserve", Json("""{"reserved":"0.0004","payout_cost":"0.00025","sweep_budget":"0.0001","sweep_cost":null,"sweep_available":"0.00001","held":"0.00006","residual":null}""")));
+        var payload = delivery.ToJsonString();
+
+        var webhookEvent = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret);
+
+        Assert.True(webhookEvent.Is(EventType.PayoutSent));
+        var reserve = webhookEvent.Payout?.MerchantNetworkReserve;
+        Assert.NotNull(reserve);
+        Assert.Equal(0.0004m, reserve.Reserved);
+        Assert.Equal(0.00025m, reserve.PayoutCost);
+        Assert.Equal(0.0001m, reserve.SweepBudget);
+        Assert.Null(reserve.SweepCost);
+        Assert.Equal(0.00001m, reserve.SweepAvailable);
+        Assert.Equal(0.00006m, reserve.Held);
+        Assert.Null(reserve.Residual);
     }
 
     [Fact]
