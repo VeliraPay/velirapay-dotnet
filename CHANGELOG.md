@@ -2,6 +2,13 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## 0.2.4 - 2026-11-15
+
+- `InvoiceCreateOptions.CustomerName` and `CustomerEmail` are optional, `string?` rather than `required string`: an invoice that names nobody can be paid by whoever has its link. `CustomerEmail` is still needed with `SendEmail`, or `CreateAsync()` throws a `ValidationException` and creates nothing, and `Invoices.SendAsync()` on an invoice without one throws a `ValidationException`. `Invoice.CustomerName` and `Invoice.CustomerEmail` are `string?` to match, `null` when the invoice has none, so code that builds with nullable warnings as errors has to handle that.
+- `InvoiceCreateOptions.ExpiresAt`, a `DateTimeOffset?` sent in UTC like a payment link's: when the invoice stops taking new payments. A payment the customer already started can still be finished in its coin, and an invoice still unpaid once nothing is under way is voided on its own, with `invoice.voided`. `Invoices.SendAsync()` on an invoice that has expired or is no longer open throws a `ConflictException`. `Invoice.ExpiresAt` reads it back, `null` when the invoice has none.
+- `InvoiceCreateOptions.SuccessMessage`, up to 1000 characters: what the customer is told once they have paid, in place of the account's own message. `Invoice.SuccessMessage` reads it back, `null` when the account's message applies.
+- The invoices in webhooks now carry `Overdue`, `DocumentUrl`, `SuccessUrl` and `CancelUrl` as the API's own answers do, and `ExpiresAt` and `SuccessMessage` too. A delivery queued before they were added still leaves them out when it is sent again, and they read as `null` there.
+
 ## 0.2.3 - 2026-11-14
 
 - `Charge.SwitchedFrom`, an `OriginalQuote` with `Asset`, `AssetAmount`, `ExchangeRate` and `SwitchedAt`: the quote a charge first had, when it was quoted again in the coin that arrived. TRX and USDT on Tron share deposit addresses, so a charge that expired or was canceled with nothing of its own coin while the other arrived is quoted again in that one: `Asset`, `AssetAmount`, `ExchangeRate` and `NetworkSurcharge` then describe the new coin, `FiatAmount` stays the same, and the transfer waits as a late payment (`charge.late_payment`) to accept, after which `charge.paid` follows in the new coin. A charge is quoted again at most once, so read the coin from each charge or webhook rather than the one it was created with. It is `null` for every other charge, and in a payload that leaves it out.
