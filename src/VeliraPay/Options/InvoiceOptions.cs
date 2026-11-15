@@ -3,10 +3,10 @@ namespace VeliraPay;
 /// <summary>A new invoice: a bill for a total or a list of items, paid on a hosted page in the coin the customer chooses.</summary>
 public sealed class InvoiceCreateOptions : BaseOptions
 {
-    /// <summary>Who is billed; left out, the invoice names nobody and whoever has its link can pay it.</summary>
+    /// <summary>Who is billed, such as their name or their username on your site; give this, <see cref="CustomerEmail"/> or both, or the invoice is refused with a <see cref="ValidationException"/> under customer_name.</summary>
     public string? CustomerName { get => Get<string>("customer_name"); set => Set("customer_name", value); }
 
-    /// <summary>Where the invoice and the receipt are emailed; required with <see cref="SendEmail"/>, and an invoice without one cannot be sent or reminded.</summary>
+    /// <summary>Where the invoice and the receipt are emailed; give this, <see cref="CustomerName"/> or both. Required with <see cref="SendEmail"/>, and an invoice without one cannot be sent or reminded.</summary>
     public string? CustomerEmail { get => Get<string>("customer_email"); set => Set("customer_email", value); }
 
     /// <summary>The fiat currency, such as <see cref="VeliraPay.Currency.USD"/>.</summary>

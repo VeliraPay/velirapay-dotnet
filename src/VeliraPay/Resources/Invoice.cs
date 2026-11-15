@@ -49,10 +49,10 @@ public sealed class Invoice : ApiResource
     /// <summary>Whether the invoice is open past its due date; null in a payload that leaves it out, such as an older webhook.</summary>
     public bool? Overdue { get; }
 
-    /// <summary>Who the invoice is addressed to, or null when it names nobody.</summary>
+    /// <summary>Who the invoice is addressed to, such as their name or username, or null when only an email was given.</summary>
     public string? CustomerName { get; }
 
-    /// <summary>Where the invoice and the receipt are emailed, or null when it has no address and can then not be sent or reminded.</summary>
+    /// <summary>Where the invoice and the receipt are emailed, or null when only a name was given, and it can then not be sent or reminded.</summary>
     public string? CustomerEmail { get; }
 
     /// <summary>A note shown on the invoice.</summary>

@@ -79,7 +79,7 @@ Options are typed classes whose properties are sent under the names the API give
 | When | Use | |
 | --- | --- | --- |
 | You are asking one customer for one payment | A [charge](#charges) | The default. It has one checkout page for that one payment, with the rate locked for 30 minutes. |
-| The customer should choose the coin, or pays later | An [invoice](#invoices) | It can name and email the customer, stays open until it is paid unless you give it an expiry, can be itemised and reminded, and lets them pick the coin on its page. |
+| The customer should choose the coin, or pays later | An [invoice](#invoices) | It names the customer by name, email or both, stays open until it is paid unless you give it an expiry, can be itemised, can be emailed and reminded when it has their email, and lets them pick the coin on its page. |
 | Many customers pay through the same public page | A [payment link](#payment-links), created once | A product sold again and again, a tip jar, a link on your site. |
 
 Do not create a new payment link for each customer or each order.
@@ -261,7 +261,7 @@ var hers = await velirapay.Invoices.ListAsync(new InvoiceListOptions { Search = 
 
 Give `Amount` instead of `Items` to bill a single total. An invoice takes no coupon, and the charges made to pay it, one per coin the customer tried, are in `invoice.Charges`.
 
-`CustomerName` and `CustomerEmail` are optional: an invoice that names nobody can be paid by whoever has its link, and `invoice.CustomerName` and `invoice.CustomerEmail` are then `null`. Only an invoice with an email can be emailed: `CreateAsync()` with `SendEmail` but no `CustomerEmail` throws a `ValidationException` and creates nothing, and `SendAsync()` on an invoice without one throws a `ValidationException` too. `SuccessMessage` is what the customer is told once they have paid, in place of your account's own message.
+An invoice names its customer by `CustomerName`, `CustomerEmail` or both. A name alone is enough, such as the buyer's username on your site (`CustomerName = "buyer_1042"`); leaving out both throws a `ValidationException`, whose `FirstError("customer_name")` says so, and creates nothing. `invoice.CustomerName` is `null` when only an email was given, and `invoice.CustomerEmail` when only a name was. Only an invoice with an email can be emailed: `CreateAsync()` with `SendEmail` but no `CustomerEmail` throws a `ValidationException` and creates nothing, and `SendAsync()` on an invoice without one throws a `ValidationException` too. `SuccessMessage` is what the customer is told once they have paid, in place of your account's own message.
 
 An invoice stays open until it is paid or voided, unless you give it `ExpiresAt`. From then on no new payment can start, though one the customer already started can still be finished in its coin, and an invoice still unpaid once nothing is under way is voided on its own, with `invoice.voided`. `SendAsync()` on an invoice that has expired or is no longer open throws a `ConflictException`. `invoice.ExpiresAt` reads it back, `null` when the invoice has none.
 

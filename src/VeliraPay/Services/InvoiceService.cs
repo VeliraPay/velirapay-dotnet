@@ -10,7 +10,7 @@ public sealed class InvoiceService : Service
     {
     }
 
-    /// <summary>Create an invoice, for a total or a list of items, and optionally email it to the customer; <see cref="InvoiceCreateOptions.SendEmail"/> without a <see cref="InvoiceCreateOptions.CustomerEmail"/> throws a <see cref="ValidationException"/> and creates nothing.</summary>
+    /// <summary>Create an invoice, for a total or a list of items, and optionally email it to the customer. It names the customer with <see cref="InvoiceCreateOptions.CustomerName"/>, <see cref="InvoiceCreateOptions.CustomerEmail"/> or both: naming neither throws a <see cref="ValidationException"/> under customer_name, and <see cref="InvoiceCreateOptions.SendEmail"/> without a <see cref="InvoiceCreateOptions.CustomerEmail"/> throws one too, either way creating nothing.</summary>
     /// <param name="options">The invoice.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>

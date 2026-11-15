@@ -215,12 +215,12 @@ public sealed class WebhookTests
     }
 
     [Fact]
-    public void AnOlderInvoiceDeliveryAndOneForNobodyReadTheMissingFieldsAsNull()
+    public void AnOlderInvoiceDeliveryAndOneForAnEmailAloneReadTheMissingFieldsAsNull()
     {
         var delivery = Fixture("webhook_invoice");
         delivery["data"]!["invoice"] = delivery["data"]!["invoice"]!.AsObject()
             .Without("expires_at", "overdue", "document_url", "success_url", "cancel_url", "success_message")
-            .With(("customer_name", null), ("customer_email", null));
+            .With(("customer_name", null));
         var payload = delivery.ToJsonString();
 
         var invoice = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret).Invoice;
@@ -228,7 +228,7 @@ public sealed class WebhookTests
         Assert.NotNull(invoice);
         Assert.Equal("w7c2h5j9d3kx", invoice.Id);
         Assert.Null(invoice.CustomerName);
-        Assert.Null(invoice.CustomerEmail);
+        Assert.Equal("grace@example.com", invoice.CustomerEmail);
         Assert.Null(invoice.Overdue);
         Assert.Null(invoice.DocumentUrl);
         Assert.Null(invoice.SuccessUrl);

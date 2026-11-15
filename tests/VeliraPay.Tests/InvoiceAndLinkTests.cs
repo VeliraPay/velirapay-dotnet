@@ -75,12 +75,13 @@ public sealed class InvoiceAndLinkTests
     }
 
     [Fact]
-    public async Task AnInvoiceIsCreatedForNobodyInParticularWithAnExpiryInUtcAndAMessage()
+    public async Task AnInvoiceIsCreatedForAUsernameAloneWithAnExpiryInUtcAndAMessage()
     {
-        var http = new MockHttp().Json(Data(Fixture("invoice").With(("customer_name", null), ("customer_email", null))), 201);
+        var http = new MockHttp().Json(Data(Fixture("invoice").With(("customer_name", "buyer_1042"), ("customer_email", null))), 201);
 
         var invoice = await Client(http).Invoices.CreateAsync(new InvoiceCreateOptions
         {
+            CustomerName = "buyer_1042",
             Currency = Currency.EUR,
             Amount = 150.00m,
             ExpiresAt = new DateTimeOffset(2026, 10, 31, 20, 0, 0, TimeSpan.FromHours(2)),
@@ -88,9 +89,9 @@ public sealed class InvoiceAndLinkTests
         });
 
         Assert.Equal(
-            """{"currency":"EUR","amount":"150","expires_at":"2026-10-31T18:00:00+00:00","success_message":"Thanks, your order is on its way."}""",
+            """{"customer_name":"buyer_1042","currency":"EUR","amount":"150","expires_at":"2026-10-31T18:00:00+00:00","success_message":"Thanks, your order is on its way."}""",
             http.LastRequest.Body);
-        Assert.Null(invoice.CustomerName);
+        Assert.Equal("buyer_1042", invoice.CustomerName);
         Assert.Null(invoice.CustomerEmail);
     }
 
