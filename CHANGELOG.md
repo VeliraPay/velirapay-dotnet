@@ -2,6 +2,11 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## 0.2.5 - 2026-11-15
+
+- An invoice must name its customer, by `InvoiceCreateOptions.CustomerName`, `CustomerEmail` or both: a name alone, such as the buyer's username on your site, is enough. `Invoices.CreateAsync()` with neither throws a `ValidationException` under `customer_name` and creates nothing. Both properties stay `string?`, and so do `Invoice.CustomerName`, `null` when only an email was given, and `Invoice.CustomerEmail`, `null` when only a name was. `CustomerEmail` is still needed with `SendEmail`, and an invoice without one still cannot be sent or reminded.
+- The README and the doc comments now say so, in place of 0.2.4's invoice that names nobody and can be paid by whoever has its link.
+
 ## 0.2.4 - 2026-11-15
 
 - `InvoiceCreateOptions.CustomerName` and `CustomerEmail` are optional, `string?` rather than `required string`: an invoice that names nobody can be paid by whoever has its link. `CustomerEmail` is still needed with `SendEmail`, or `CreateAsync()` throws a `ValidationException` and creates nothing, and `Invoices.SendAsync()` on an invoice without one throws a `ValidationException`. `Invoice.CustomerName` and `Invoice.CustomerEmail` are `string?` to match, `null` when the invoice has none, so code that builds with nullable warnings as errors has to handle that.
