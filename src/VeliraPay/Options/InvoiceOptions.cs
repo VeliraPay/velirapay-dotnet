@@ -1,13 +1,13 @@
 namespace VeliraPay;
 
-/// <summary>A new invoice: a bill for one customer, for a total or a list of items, paid on a hosted page in the coin they choose.</summary>
+/// <summary>A new invoice: a bill for a total or a list of items, paid on a hosted page in the coin the customer chooses.</summary>
 public sealed class InvoiceCreateOptions : BaseOptions
 {
-    /// <summary>The customer's name.</summary>
-    public required string CustomerName { get => Get<string>("customer_name")!; set => Set("customer_name", value); }
+    /// <summary>Who is billed; left out, the invoice names nobody and whoever has its link can pay it.</summary>
+    public string? CustomerName { get => Get<string>("customer_name"); set => Set("customer_name", value); }
 
-    /// <summary>The customer's email address, where the invoice is sent.</summary>
-    public required string CustomerEmail { get => Get<string>("customer_email")!; set => Set("customer_email", value); }
+    /// <summary>Where the invoice and the receipt are emailed; required with <see cref="SendEmail"/>, and an invoice without one cannot be sent or reminded.</summary>
+    public string? CustomerEmail { get => Get<string>("customer_email"); set => Set("customer_email", value); }
 
     /// <summary>The fiat currency, such as <see cref="VeliraPay.Currency.USD"/>.</summary>
     public required string Currency { get => Get<string>("currency")!; set => Set("currency", value); }
@@ -24,13 +24,19 @@ public sealed class InvoiceCreateOptions : BaseOptions
     /// <summary>The day it is due: today or later.</summary>
     public DateOnly? DueAt { get => Get<DateOnly?>("due_at"); set => Set("due_at", value); }
 
+    /// <summary>When the invoice stops taking new payments: a payment already started can still be finished, and an invoice still unpaid once nothing is under way is voided.</summary>
+    public DateTimeOffset? ExpiresAt { get => Get<DateTimeOffset?>("expires_at"); set => Set("expires_at", value); }
+
     /// <summary>The https:// page the customer is offered a button back to once they have paid.</summary>
     public string? SuccessUrl { get => Get<string>("success_url"); set => Set("success_url", value); }
 
     /// <summary>The https:// page the customer can go back to from the invoice without paying.</summary>
     public string? CancelUrl { get => Get<string>("cancel_url"); set => Set("cancel_url", value); }
 
-    /// <summary>Whether to email it to the customer straight away.</summary>
+    /// <summary>What the customer is told once they have paid, up to 1000 characters; left out, the account's own message applies.</summary>
+    public string? SuccessMessage { get => Get<string>("success_message"); set => Set("success_message", value); }
+
+    /// <summary>Whether to email it to the customer straight away, which needs <see cref="CustomerEmail"/>.</summary>
     public bool? SendEmail { get => Get<bool?>("send_email"); set => Set("send_email", value); }
 }
 

@@ -10,7 +10,7 @@ public sealed class InvoiceService : Service
     {
     }
 
-    /// <summary>Create an invoice, for a total or a list of items, and optionally email it to the customer.</summary>
+    /// <summary>Create an invoice, for a total or a list of items, and optionally email it to the customer; <see cref="InvoiceCreateOptions.SendEmail"/> without a <see cref="InvoiceCreateOptions.CustomerEmail"/> throws a <see cref="ValidationException"/> and creates nothing.</summary>
     /// <param name="options">The invoice.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
@@ -46,7 +46,7 @@ public sealed class InvoiceService : Service
         }
     }
 
-    /// <summary>Email an open invoice to its customer, as a reminder when it was sent before.</summary>
+    /// <summary>Email an open invoice to its customer, as a reminder when it was sent before. Throws a <see cref="ValidationException"/> when it has no customer email, and a <see cref="ConflictException"/> when it is not open or has expired.</summary>
     /// <param name="id">The invoice's id.</param>
     /// <param name="requestOptions">An idempotency key.</param>
     /// <param name="cancellationToken">Cancels the request.</param>

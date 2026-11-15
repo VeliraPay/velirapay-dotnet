@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace VeliraPay;
 
-/// <summary>A bill sent to one customer, paid through a hosted page in the coin they choose.</summary>
+/// <summary>A bill, paid through a hosted page in the coin the customer chooses.</summary>
 public sealed class Invoice : ApiResource
 {
     /// <summary>Read an invoice from the JSON the API sent.</summary>
@@ -16,13 +16,14 @@ public sealed class Invoice : ApiResource
         Number = JsonValues.String(data, "number");
         Status = JsonValues.String(data, "status");
         Overdue = JsonValues.NullableBool(data, "overdue");
-        CustomerName = JsonValues.String(data, "customer_name");
-        CustomerEmail = JsonValues.String(data, "customer_email");
+        CustomerName = JsonValues.NullableString(data, "customer_name");
+        CustomerEmail = JsonValues.NullableString(data, "customer_email");
         Memo = JsonValues.NullableString(data, "memo");
         Amount = JsonValues.Decimal(data, "amount");
         Currency = JsonValues.String(data, "currency");
         Items = JsonValues.Objects(data, "items", item => new InvoiceItem(item));
         DueAt = JsonValues.Day(data, "due_at");
+        ExpiresAt = JsonValues.Date(data, "expires_at");
         HostedUrl = JsonValues.String(data, "hosted_url");
         DocumentUrl = JsonValues.NullableString(data, "document_url");
         Charges = [.. JsonValues.Records(data, "charges").Select(charge => new InvoiceCharge(JsonValues.String(charge, "id", JsonValues.String(charge, "code")), JsonValues.String(charge, "status"), JsonValues.String(charge, "asset")))];
@@ -33,6 +34,7 @@ public sealed class Invoice : ApiResource
         CreatedAt = JsonValues.Date(data, "created_at");
         SuccessUrl = JsonValues.NullableString(data, "success_url");
         CancelUrl = JsonValues.NullableString(data, "cancel_url");
+        SuccessMessage = JsonValues.NullableString(data, "success_message");
     }
 
     /// <summary>The invoice's public code, also the last segment of its hosted URL.</summary>
@@ -44,14 +46,14 @@ public sealed class Invoice : ApiResource
     /// <summary>One of the <see cref="InvoiceStatus"/> values, or one the API added after this version of the library.</summary>
     public string Status { get; }
 
-    /// <summary>Whether the invoice is open past its due date; absent from webhooks, so null there.</summary>
+    /// <summary>Whether the invoice is open past its due date; null in a payload that leaves it out, such as an older webhook.</summary>
     public bool? Overdue { get; }
 
-    /// <summary>The customer's name.</summary>
-    public string CustomerName { get; }
+    /// <summary>Who the invoice is addressed to, or null when it names nobody.</summary>
+    public string? CustomerName { get; }
 
-    /// <summary>The customer's email address.</summary>
-    public string CustomerEmail { get; }
+    /// <summary>Where the invoice and the receipt are emailed, or null when it has no address and can then not be sent or reminded.</summary>
+    public string? CustomerEmail { get; }
 
     /// <summary>A note shown on the invoice.</summary>
     public string? Memo { get; }
@@ -68,10 +70,13 @@ public sealed class Invoice : ApiResource
     /// <summary>The day the invoice is due.</summary>
     public DateOnly? DueAt { get; }
 
+    /// <summary>When the invoice stops taking new payments, or null when it stays open until it is paid or voided. A payment already started can still be finished; an invoice still unpaid once nothing is under way is voided, with <c>invoice.voided</c>.</summary>
+    public DateTimeOffset? ExpiresAt { get; }
+
     /// <summary>The page where the customer pays.</summary>
     public string HostedUrl { get; }
 
-    /// <summary>The printable invoice; absent from webhooks.</summary>
+    /// <summary>The printable invoice; null in a payload that leaves it out, such as an older webhook.</summary>
     public string? DocumentUrl { get; }
 
     /// <summary>The charges made to pay the invoice, one per coin the customer tried.</summary>
@@ -92,11 +97,14 @@ public sealed class Invoice : ApiResource
     /// <summary>When it was created.</summary>
     public DateTimeOffset? CreatedAt { get; }
 
-    /// <summary>The page the customer is offered a button back to once they have paid; absent from webhooks.</summary>
+    /// <summary>The page the customer is offered a button back to once they have paid, or null when the account's default applies.</summary>
     public string? SuccessUrl { get; }
 
-    /// <summary>The page the customer can go back to from the invoice without paying; absent from webhooks.</summary>
+    /// <summary>The page the customer can go back to from the invoice without paying, or null when the account's default applies.</summary>
     public string? CancelUrl { get; }
+
+    /// <summary>What the customer is told once they have paid, or null when the account's own message applies.</summary>
+    public string? SuccessMessage { get; }
 
     /// <summary>Whether the invoice can still be paid.</summary>
     public bool IsOpen => Status == InvoiceStatus.Open;

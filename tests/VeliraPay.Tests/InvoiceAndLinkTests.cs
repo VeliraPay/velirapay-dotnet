@@ -63,13 +63,45 @@ public sealed class InvoiceAndLinkTests
         Assert.Equal(100.00m, invoice.Items[1].UnitAmount);
         Assert.Equal(250.00m, invoice.Items[1].Total);
         Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);
+        Assert.Equal(Utc("2026-10-31T23:59:59Z"), invoice.ExpiresAt);
         Assert.Equal("https://velirapay.com/i/w7c2h5j9d3kx", invoice.HostedUrl);
         Assert.Equal("https://velirapay.com/i/w7c2h5j9d3kx/document", invoice.DocumentUrl);
         Assert.Equal("https://example.com/orders/1042", invoice.SuccessUrl);
         Assert.Null(invoice.CancelUrl);
+        Assert.Equal("Thanks, Grace. Your receipt is on its way.", invoice.SuccessMessage);
         Assert.Equal([new InvoiceCharge("m2q7w4e9r1ty", "expired", "ETH")], invoice.Charges);
         Assert.Equal(Utc("2026-09-21T08:00:00Z"), invoice.SentAt);
         Assert.Null(invoice.PaidAt);
+    }
+
+    [Fact]
+    public async Task AnInvoiceIsCreatedForNobodyInParticularWithAnExpiryInUtcAndAMessage()
+    {
+        var http = new MockHttp().Json(Data(Fixture("invoice").With(("customer_name", null), ("customer_email", null))), 201);
+
+        var invoice = await Client(http).Invoices.CreateAsync(new InvoiceCreateOptions
+        {
+            Currency = Currency.EUR,
+            Amount = 150.00m,
+            ExpiresAt = new DateTimeOffset(2026, 10, 31, 20, 0, 0, TimeSpan.FromHours(2)),
+            SuccessMessage = "Thanks, your order is on its way.",
+        });
+
+        Assert.Equal(
+            """{"currency":"EUR","amount":"150","expires_at":"2026-10-31T18:00:00+00:00","success_message":"Thanks, your order is on its way."}""",
+            http.LastRequest.Body);
+        Assert.Null(invoice.CustomerName);
+        Assert.Null(invoice.CustomerEmail);
+    }
+
+    [Fact]
+    public void AnInvoiceFromBeforeExpiriesAndMessagesReadsThemAsNull()
+    {
+        var invoice = new Invoice(Element(Fixture("invoice").Without("expires_at", "success_message")));
+
+        Assert.Null(invoice.ExpiresAt);
+        Assert.Null(invoice.SuccessMessage);
+        Assert.Equal("Grace Hopper", invoice.CustomerName);
     }
 
     [Fact]

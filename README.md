@@ -79,7 +79,7 @@ Options are typed classes whose properties are sent under the names the API give
 | When | Use | |
 | --- | --- | --- |
 | You are asking one customer for one payment | A [charge](#charges) | The default. It has one checkout page for that one payment, with the rate locked for 30 minutes. |
-| The customer should choose the coin, or pays later | An [invoice](#invoices) | It needs their name and email, has no timer, can be itemised and reminded, and lets them pick the coin on its page. |
+| The customer should choose the coin, or pays later | An [invoice](#invoices) | It can name and email the customer, stays open until it is paid unless you give it an expiry, can be itemised and reminded, and lets them pick the coin on its page. |
 | Many customers pay through the same public page | A [payment link](#payment-links), created once | A product sold again and again, a tip jar, a link on your site. |
 
 Do not create a new payment link for each customer or each order.
@@ -243,7 +243,9 @@ var invoice = await velirapay.Invoices.CreateAsync(new InvoiceCreateOptions
         new InvoiceItemOptions { Description = "Hosting", Quantity = 1, UnitAmount = 250.00m },
     ],
     DueAt = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+    ExpiresAt = DateTimeOffset.UtcNow.AddDays(30), // no new payment can start after this
     SuccessUrl = "https://example.com/orders/1042",
+    SuccessMessage = "Thank you, your receipt is on its way.", // on the page and in the receipt
     SendEmail = true,
 });
 
@@ -258,6 +260,10 @@ var hers = await velirapay.Invoices.ListAsync(new InvoiceListOptions { Search = 
 ```
 
 Give `Amount` instead of `Items` to bill a single total. An invoice takes no coupon, and the charges made to pay it, one per coin the customer tried, are in `invoice.Charges`.
+
+`CustomerName` and `CustomerEmail` are optional: an invoice that names nobody can be paid by whoever has its link, and `invoice.CustomerName` and `invoice.CustomerEmail` are then `null`. Only an invoice with an email can be emailed: `CreateAsync()` with `SendEmail` but no `CustomerEmail` throws a `ValidationException` and creates nothing, and `SendAsync()` on an invoice without one throws a `ValidationException` too. `SuccessMessage` is what the customer is told once they have paid, in place of your account's own message.
+
+An invoice stays open until it is paid or voided, unless you give it `ExpiresAt`. From then on no new payment can start, though one the customer already started can still be finished in its coin, and an invoice still unpaid once nothing is under way is voided on its own, with `invoice.voided`. `SendAsync()` on an invoice that has expired or is no longer open throws a `ConflictException`. `invoice.ExpiresAt` reads it back, `null` when the invoice has none.
 
 An invoice can be emailed once every 10 minutes, and its emails count towards the hourly limit under [Charges](#charges); past either, `SendAsync()` throws a `RateLimitException`, and `CreateAsync()` with `SendEmail` throws it and creates nothing. In test mode, invoices are only emailed to members of your account, and anyone else is refused with a `ValidationException`.
 
@@ -451,11 +457,11 @@ Some things to know:
 
 `charge.payment_detected` arrives as soon as a transfer is seen, before it is confirmed: tell the customer, but do not fulfil. It and `charge.late_payment` carry that transfer as `webhookEvent.Transaction` ([Short and late payments](#short-and-late-payments)). `payout.sent` arrives when your share of a paid charge has been broadcast, and `payout.confirmed` when the chain has confirmed it; both carry the charge, and the payout as `webhookEvent.Payout`, the same object `Payouts.RetrieveAsync()` answers with. Book the money on `payout.confirmed`: a broadcast payout can still fail and go out again, so `payout.sent` can arrive more than once for a charge.
 
-The charge and invoice in a delivery are not quite the ones the API answers with:
+The charge in a delivery is not quite the one the API answers with, and neither is the invoice in an older delivery:
 
 - A charge's coin amounts and exchange rate, those of `SwitchedFrom` included, carry all 18 decimal places (`0.002500000000000000` rather than `0.0025`); as `decimal` values they compare equal.
 - A charge has no `Timeline`, `Refunds`, `CheckoutUrl` or `ReceiptUrl`. Its payment link and invoice come with their title and number, as `charge.PaymentLinkTitle` and `charge.InvoiceNumber`, which the API's own answers leave out.
-- An invoice has no `Overdue`, `DocumentUrl`, `SuccessUrl` or `CancelUrl`; all four are `null`.
+- An invoice carries every field the API's does. A delivery queued before `Overdue`, `DocumentUrl`, `SuccessUrl`, `CancelUrl`, `ExpiresAt` and `SuccessMessage` were added to them still leaves those out when it is sent again, and they read as `null`.
 - `charge.refunded` carries no refund. Read it from the event, with `(await velirapay.Events.RetrieveAsync(webhookEvent.EventId!)).Details`, which holds its `amount`, and `txid` and `reason` when you gave them.
 
 To test your handler, sign a payload yourself: `Webhook.GenerateSignatureHeader(payload, "whsec_test")` gives the header VeliraPay would send.

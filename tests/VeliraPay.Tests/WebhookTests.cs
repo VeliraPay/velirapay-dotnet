@@ -203,11 +203,37 @@ public sealed class WebhookTests
         Assert.NotNull(invoice);
         Assert.Equal("w7c2h5j9d3kx", invoice.Id);
         Assert.True(invoice.IsPaid);
+        Assert.False(invoice.Overdue);
+        Assert.Equal("Grace Hopper", invoice.CustomerName);
+        Assert.Equal("https://velirapay.com/i/w7c2h5j9d3kx/document", invoice.DocumentUrl);
+        Assert.Equal("https://example.com/orders/1042", invoice.SuccessUrl);
+        Assert.Null(invoice.CancelUrl);
+        Assert.Null(invoice.SuccessMessage);
+        Assert.Equal(Utc("2026-10-31T23:59:59Z"), invoice.ExpiresAt);
+        Assert.Equal(["m2q7w4e9r1ty", "z8x6c4v2b0nm"], invoice.Charges.Select(charge => charge.Id));
+        Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);
+    }
+
+    [Fact]
+    public void AnOlderInvoiceDeliveryAndOneForNobodyReadTheMissingFieldsAsNull()
+    {
+        var delivery = Fixture("webhook_invoice");
+        delivery["data"]!["invoice"] = delivery["data"]!["invoice"]!.AsObject()
+            .Without("expires_at", "overdue", "document_url", "success_url", "cancel_url", "success_message")
+            .With(("customer_name", null), ("customer_email", null));
+        var payload = delivery.ToJsonString();
+
+        var invoice = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret).Invoice;
+
+        Assert.NotNull(invoice);
+        Assert.Equal("w7c2h5j9d3kx", invoice.Id);
+        Assert.Null(invoice.CustomerName);
+        Assert.Null(invoice.CustomerEmail);
         Assert.Null(invoice.Overdue);
         Assert.Null(invoice.DocumentUrl);
         Assert.Null(invoice.SuccessUrl);
-        Assert.Equal(["m2q7w4e9r1ty", "z8x6c4v2b0nm"], invoice.Charges.Select(charge => charge.Id));
-        Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);
+        Assert.Null(invoice.ExpiresAt);
+        Assert.Null(invoice.SuccessMessage);
     }
 
     [Fact]
