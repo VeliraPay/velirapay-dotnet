@@ -149,7 +149,8 @@ public sealed class ChargeTests
         Assert.Equal("GB", charge.Customer.Country);
         Assert.Equal(7, charge.Customer.Metadata["orders"].GetInt32());
         Assert.True(charge.Customer.Metadata["verified"].GetBoolean());
-        Assert.Equal([new CustomFieldAnswer("Company", "Analytical Engines Ltd")], charge.CustomFields);
+        Assert.Equal([new CustomFieldAnswer("Company", "Analytical Engines Ltd"), new CustomFieldAnswer("Newsletter", "yes") { Type = QuestionType.Checkbox }], charge.CustomFields);
+        Assert.Equal(QuestionType.Text, charge.CustomFields[0].Type);
         Assert.Equal("1042", Assert.Single(charge.Metadata).Value.GetString());
         Assert.Equal("https://velirapay.com/c/k3v9x2m7q8wz", charge.CheckoutUrl);
         Assert.Equal("https://velirapay.com/c/k3v9x2m7q8wz/receipt", charge.ReceiptUrl);

@@ -193,6 +193,49 @@ public sealed class InvoiceAndLinkTests
     }
 
     [Fact]
+    public async Task TypedQuestionsAreSentWithTheirSettings()
+    {
+        var http = new MockHttp().Json(Data(Fixture("payment_link")), 201).Json(Data(Fixture("payment_link")));
+        var client = Client(http);
+
+        await client.PaymentLinks.CreateAsync(new PaymentLinkCreateOptions
+        {
+            Title = "Tip jar",
+            PricingType = PricingType.Open,
+            Currency = Currency.USD,
+            CustomFields =
+            [
+                new CheckoutQuestionOptions { Label = "Plan", Type = QuestionType.Select, Required = true, Options = ["Monthly", "Yearly"] },
+                new CheckoutQuestionOptions { Label = "Order number", Type = QuestionType.Text, Pattern = "ORD-[0-9]{6}", PatternHint = "Write it as ORD-123456." },
+                new CheckoutQuestionOptions { Label = "Message" },
+            ],
+        });
+
+        Assert.Equal(
+            """[{"label":"Plan","type":"select","required":true,"options":["Monthly","Yearly"]},{"label":"Order number","type":"text","pattern":"ORD-[0-9]{6}","pattern_hint":"Write it as ORD-123456."},{"label":"Message"}]""",
+            http.LastRequest.Json!["custom_fields"]!.ToJsonString());
+
+        await client.PaymentLinks.UpdateAsync("p4n8r2t6y1ua", new PaymentLinkUpdateOptions
+        {
+            CustomFields = [new CheckoutQuestionOptions { Label = "Seats", Type = QuestionType.Number, Min = "1", Max = "20" }],
+        });
+
+        Assert.Equal("""{"custom_fields":[{"label":"Seats","type":"number","min":"1","max":"20"}]}""", http.LastRequest.Body);
+    }
+
+    [Fact]
+    public async Task AQuestionSavedBeforeTypesReadsAsShortText()
+    {
+        var http = new MockHttp().Json(Data(Fixture("payment_link").With(("custom_fields", JsonNode.Parse("""[{"label":"Message","required":false}]""")))));
+
+        var link = await Client(http).PaymentLinks.RetrieveAsync("p4n8r2t6y1ua");
+
+        Assert.Equal([new CheckoutQuestion("Message", false)], link.CustomFields);
+        Assert.Equal(QuestionType.Text, link.CustomFields[0].Type);
+        Assert.Null(link.CustomFields[0].Options);
+    }
+
+    [Fact]
     public async Task APaymentLinkIsReadIntoTypedProperties()
     {
         var http = new MockHttp().Json(Data(Fixture("payment_link")));
@@ -214,7 +257,20 @@ public sealed class InvoiceAndLinkTests
         Assert.Equal("https://example.com/thanks", link.SuccessUrl);
         Assert.True(link.CollectName);
         Assert.False(link.RequireEmail);
-        Assert.Equal([new CheckoutQuestion("Message", false)], link.CustomFields);
+        Assert.Equal(2, link.CustomFields.Count);
+        var message = link.CustomFields[0];
+        Assert.Equal(("Message", QuestionType.Textarea, false), (message.Label, message.Type, message.Required));
+        Assert.Equal("Say something nice", message.Placeholder);
+        Assert.Null(message.Help);
+        Assert.Null(message.Options);
+        Assert.Null(message.Min);
+        Assert.Equal("500", message.Max);
+        Assert.Null(message.Pattern);
+        Assert.Null(message.PatternHint);
+        var plan = link.CustomFields[1];
+        Assert.Equal(("Plan", QuestionType.Select, true), (plan.Label, plan.Type, plan.Required));
+        Assert.Equal("You can change it later.", plan.Help);
+        Assert.Equal(["Monthly", "Yearly"], plan.Options);
         Assert.Equal("Thank you!", link.SuccessMessage);
         Assert.Null(link.ExpiresAt);
         Assert.Equal(100, link.MaxPayments);

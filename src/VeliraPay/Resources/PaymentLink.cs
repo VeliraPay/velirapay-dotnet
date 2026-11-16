@@ -27,7 +27,17 @@ public sealed class PaymentLink : ApiResource
         CancelUrl = JsonValues.NullableString(data, "cancel_url");
         CollectName = JsonValues.Bool(data, "collect_name");
         RequireEmail = JsonValues.Bool(data, "require_email");
-        CustomFields = [.. JsonValues.Records(data, "custom_fields").Select(field => new CheckoutQuestion(JsonValues.String(field, "label"), JsonValues.Bool(field, "required")))];
+        CustomFields = [.. JsonValues.Records(data, "custom_fields").Select(field => new CheckoutQuestion(JsonValues.String(field, "label"), JsonValues.Bool(field, "required"))
+        {
+            Type = JsonValues.String(field, "type", QuestionType.Text),
+            Placeholder = JsonValues.NullableString(field, "placeholder"),
+            Help = JsonValues.NullableString(field, "help"),
+            Options = JsonValues.NullableStrings(field, "options"),
+            Min = JsonValues.NullableString(field, "min"),
+            Max = JsonValues.NullableString(field, "max"),
+            Pattern = JsonValues.NullableString(field, "pattern"),
+            PatternHint = JsonValues.NullableString(field, "pattern_hint"),
+        })];
         SuccessMessage = JsonValues.NullableString(data, "success_message");
         ExpiresAt = JsonValues.Date(data, "expires_at");
         MaxPayments = JsonValues.NullableInt(data, "max_payments");
@@ -120,7 +130,32 @@ public sealed class PaymentLink : ApiResource
     public bool HasFixedAmount => PricingType == VeliraPay.PricingType.Fixed;
 }
 
-/// <summary>A question a payment link's checkout asks.</summary>
+/// <summary>A question a payment link's checkout asks, with its settings: those its type does not use are null.</summary>
 /// <param name="Label">The question.</param>
 /// <param name="Required">Whether the customer must answer it.</param>
-public sealed record CheckoutQuestion(string Label, bool Required);
+public sealed record CheckoutQuestion(string Label, bool Required)
+{
+    /// <summary>One of the <see cref="QuestionType"/> values, or one the API added after this version of the library; "text" for a link saved before types.</summary>
+    public string Type { get; init; } = QuestionType.Text;
+
+    /// <summary>A hint shown in the empty field, for text, textarea, number, email and url.</summary>
+    public string? Placeholder { get; init; }
+
+    /// <summary>A line shown under the field.</summary>
+    public string? Help { get; init; }
+
+    /// <summary>The choices of a select question, in order.</summary>
+    public IReadOnlyList<string>? Options { get; init; }
+
+    /// <summary>For text and textarea the fewest characters, for number the lowest value, for date the earliest as YYYY-MM-DD.</summary>
+    public string? Min { get; init; }
+
+    /// <summary>For text and textarea the most characters, for number the highest value, for date the latest as YYYY-MM-DD.</summary>
+    public string? Max { get; init; }
+
+    /// <summary>For text: a regular expression the whole answer has to match.</summary>
+    public string? Pattern { get; init; }
+
+    /// <summary>The message shown when an answer does not match <see cref="Pattern"/>.</summary>
+    public string? PatternHint { get; init; }
+}

@@ -278,7 +278,12 @@ var link = await velirapay.PaymentLinks.CreateAsync(new PaymentLinkCreateOptions
     Currency = Currency.EUR,
     AcceptedAssets = [Asset.BTC, Asset.ETH, Asset.USDC], // null takes every coin the account takes
     SuccessUrl = "https://example.com/thanks",
-    CustomFields = [new CheckoutQuestionOptions { Label = "Company", Required = false }],
+    CustomFields =
+    [
+        new CheckoutQuestionOptions { Label = "Company" }, // short text, optional
+        new CheckoutQuestionOptions { Label = "Seats", Type = QuestionType.Number, Required = true, Min = "1", Max = "50" },
+        new CheckoutQuestionOptions { Label = "Billing", Type = QuestionType.Select, Options = ["Monthly", "Yearly"] },
+    ],
 });
 
 var url = link.CheckoutUrl; // https://velirapay.com/pay/…
@@ -298,6 +303,8 @@ await velirapay.PaymentLinks.RestoreAsync(link.Id);
 
 var active = await velirapay.PaymentLinks.ListAsync(new PaymentLinkListOptions { Status = PaymentLinkStatus.Active, Search = "Pro plan" }); // Search looks in titles
 ```
+
+A link asks up to ten questions. Each needs only its `Label`; `Type` is one of the `QuestionType` values (short or long text, number, email, phone, link, date, dropdown, checkbox or country) and is short text when left out. A question can also have a `Placeholder`, a `Help` line, a dropdown's `Options`, bounds as strings in `Min` and `Max` (lengths for text, values for a number, `YYYY-MM-DD` for a date) and, for short text, a regular expression in `Pattern` that the whole answer has to match, with `PatternHint` shown when it does not. `link.CustomFields` reads every setting back as `CheckoutQuestion`s, `null` where a question does not use it. The answers land on the charge as `charge.CustomFields`, each a `CustomFieldAnswer` with its `Label`, its `Value`, always a string (a ticked checkbox is `"yes"`, a phone number E.164, a country its two-letter code), and the question's `Type`.
 
 ## Coupons
 

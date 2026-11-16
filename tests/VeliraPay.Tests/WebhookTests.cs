@@ -45,6 +45,7 @@ public sealed class WebhookTests
         Assert.Equal("Hetzner Online GmbH", charge.Customer.IpNetwork);
         Assert.Equal("ada@example.com", charge.Customer.Email);
         Assert.Empty(charge.Customer.Metadata);
+        Assert.Equal([new CustomFieldAnswer("Country", "GB") { Type = QuestionType.Country }], charge.CustomFields);
         Assert.Equal("1042", charge.Metadata["order_id"].GetString());
         Assert.Empty(charge.Refunds);
         Assert.Null(charge.CheckoutUrl);

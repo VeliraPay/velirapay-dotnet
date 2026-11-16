@@ -30,7 +30,7 @@ public sealed class ChargeCreateOptions : BaseOptions
     /// <summary>Your own key-value data: up to 20 keys of at most 40 characters, each a string of at most 500 characters, a number, a boolean or null.</summary>
     public Dictionary<string, object?>? Metadata { get => Get<Dictionary<string, object?>>("metadata"); set => Set("metadata", value); }
 
-    /// <summary>Up to 5 labelled details shown with the charge.</summary>
+    /// <summary>Up to 10 labelled details shown with the charge.</summary>
     public IReadOnlyList<CustomFieldOptions>? CustomFields { get => Get<IReadOnlyList<CustomFieldOptions>>("custom_fields"); set => Set("custom_fields", value); }
 
     /// <summary>The https:// page the customer is offered a button back to once they have paid.</summary>
@@ -80,7 +80,7 @@ public sealed class CustomFieldOptions : BaseOptions
     /// <summary>What the detail is, such as "Company".</summary>
     public required string Label { get => Get<string>("label")!; set => Set("label", value); }
 
-    /// <summary>The detail itself.</summary>
+    /// <summary>The detail itself, up to 2,000 characters.</summary>
     public required string Value { get => Get<string>("value")!; set => Set("value", value); }
 }
 

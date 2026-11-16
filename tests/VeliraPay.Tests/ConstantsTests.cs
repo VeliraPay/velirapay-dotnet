@@ -50,6 +50,13 @@ public sealed class ConstantsTests
     }
 
     [Fact]
+    public void EveryQuestionTypeHasAConstant()
+    {
+        // App\Enums\QuestionType
+        Assert.Equal(["text", "textarea", "number", "email", "phone", "url", "date", "select", "checkbox", "country"], Values(typeof(QuestionType)));
+    }
+
+    [Fact]
     public void EveryActivityActionHasAConstant()
     {
         // App\Enums\ActivityAction, in its order.

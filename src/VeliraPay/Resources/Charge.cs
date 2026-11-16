@@ -38,7 +38,7 @@ public sealed class Charge : ApiResource
         CustomerEmail = JsonValues.NullableString(data, "customer_email");
         CustomerName = JsonValues.NullableString(data, "customer_name");
         Customer = new Customer(MergedCustomer(data, CustomerEmail, CustomerName));
-        CustomFields = [.. JsonValues.Records(data, "custom_fields").Select(field => new CustomFieldAnswer(JsonValues.String(field, "label"), JsonValues.String(field, "value")))];
+        CustomFields = [.. JsonValues.Records(data, "custom_fields").Select(field => new CustomFieldAnswer(JsonValues.String(field, "label"), JsonValues.String(field, "value")) { Type = JsonValues.String(field, "type", QuestionType.Text) })];
         Metadata = JsonValues.Map(data, "metadata");
         CheckoutUrl = JsonValues.NullableString(data, "checkout_url");
         ReceiptUrl = JsonValues.NullableString(data, "receipt_url");
@@ -244,8 +244,12 @@ public sealed record ChargeTimelineEntry(string Event, DateTimeOffset? Time);
 
 /// <summary>A labelled detail of a charge: an answer to a payment link's question, or one given when creating the charge.</summary>
 /// <param name="Label">What the detail is, such as "Company".</param>
-/// <param name="Value">The detail itself.</param>
-public sealed record CustomFieldAnswer(string Label, string Value);
+/// <param name="Value">The detail itself, always a string: a ticked checkbox is "yes", a phone number E.164, a country its two-letter code.</param>
+public sealed record CustomFieldAnswer(string Label, string Value)
+{
+    /// <summary>The <see cref="QuestionType"/> value of the question it answers; "text" for a detail given when creating the charge or kept before types.</summary>
+    public string Type { get; init; } = QuestionType.Text;
+}
 
 /// <summary>What is known about the customer paying a charge, including the signals that help spot fraud.</summary>
 public sealed class Customer : ApiResource
