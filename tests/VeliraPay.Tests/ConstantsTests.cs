@@ -25,7 +25,7 @@ public sealed class ConstantsTests
     {
         // App\Enums\AddressFormat
         Assert.Equal(
-            ["bitcoin", "litecoin", "dogecoin", "bitcoincash", "evm", "bsc", "base", "arbitrum", "polygon", "tron", "monero", "solana", "lightning"],
+            ["bitcoin", "litecoin", "dogecoin", "bitcoincash", "evm", "bsc", "base", "arbitrum", "polygon", "tron", "monero", "solana"],
             Values(typeof(AddressNetwork)));
         Assert.Equal("bitcoincash", AddressNetwork.BitcoinCash);
         Assert.Equal("evm", AddressNetwork.Evm);

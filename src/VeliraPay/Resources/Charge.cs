@@ -33,7 +33,6 @@ public sealed class Charge : ApiResource
         Refunds = JsonValues.Objects(data, "refunds", refund => new Refund(refund));
         ExchangeRate = JsonValues.Decimal(data, "exchange_rate");
         DepositAddress = JsonValues.String(data, "deposit_address");
-        PaymentRequest = JsonValues.NullableString(data, "payment_request");
         Transactions = JsonValues.Objects(data, "transactions", transaction => new Transaction(transaction));
         Timeline = [.. JsonValues.Records(data, "timeline").Select(entry => new ChargeTimelineEntry(JsonValues.String(entry, "event"), JsonValues.Date(entry, "time")))];
         CustomerEmail = JsonValues.NullableString(data, "customer_email");
@@ -128,11 +127,8 @@ public sealed class Charge : ApiResource
     /// <summary>Fiat per one unit of the coin, locked when the charge was quoted; for a charge quoted again in another coin, that coin's, with the first in <see cref="SwitchedFrom"/>.</summary>
     public decimal ExchangeRate { get; }
 
-    /// <summary>The address the customer pays into, or the payment hash of the Lightning invoice for <see cref="VeliraPay.Asset.BTC_LIGHTNING"/>.</summary>
+    /// <summary>The address the customer pays into.</summary>
     public string DepositAddress { get; }
-
-    /// <summary>The Lightning invoice (BOLT11) the customer pays, for <see cref="VeliraPay.Asset.BTC_LIGHTNING"/>; null for every other coin.</summary>
-    public string? PaymentRequest { get; }
 
     /// <summary>The transfers seen into the deposit address.</summary>
     public IReadOnlyList<Transaction> Transactions { get; }

@@ -126,7 +126,6 @@ public sealed class ChargeTests
         Assert.Equal(1.75m, charge.ProcessingTerms.Percent);
         Assert.Equal(10, charge.ProcessingTerms.MaxForwardingPercent);
         Assert.Null(charge.SwitchedFrom);
-        Assert.Null(charge.PaymentRequest);
         var transaction = Assert.Single(charge.Transactions);
         Assert.Equal(0.0025m, transaction.Amount);
         Assert.Equal(3, transaction.Confirmations);
@@ -160,16 +159,12 @@ public sealed class ChargeTests
     }
 
     [Fact]
-    public void AChargeWithANetworkSurchargeOrALightningInvoiceSaysSo()
+    public void AChargeWithANetworkSurchargeSaysSo()
     {
         var tron = new Charge(Element(Fixture("charge").With(("asset", "USDT_TRON"), ("asset_amount", "52.50"), ("network_surcharge", "2.50"))));
-        var lightning = new Charge(Element(Fixture("charge").With(("asset", "BTC_LIGHTNING"), ("payment_request", "lnbc25u1p..."), ("deposit_address", "9f86d081884c7d65"))));
 
         Assert.Equal(2.50m, tron.NetworkSurcharge);
         Assert.Equal(52.50m, tron.AssetAmount);
-        Assert.Equal(Asset.BTC_LIGHTNING, lightning.Asset);
-        Assert.Equal("lnbc25u1p...", lightning.PaymentRequest);
-        Assert.Equal("9f86d081884c7d65", lightning.DepositAddress);
     }
 
     [Fact]

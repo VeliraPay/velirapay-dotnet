@@ -168,8 +168,6 @@ await velirapay.Charges.CancelAsync("k3v9x2m7q8wz");
 
 The accounts of one owner can create 300 charges in each mode within 30 minutes, through the API, the MCP server and the dashboard together, and 30 until one of them has been paid in live mode; paid live charges do not count, and payments customers start on the hosted checkout are not counted. Past that, `CreateAsync()` throws a `RateLimitException` whose `RetryAfter` says how long to wait.
 
-A charge in `Asset.BTC_LIGHTNING`, Bitcoin over Lightning where it is on offer, is paid to a Lightning invoice: `charge.PaymentRequest` holds it (BOLT11), and `DepositAddress` its payment hash. For every other coin `PaymentRequest` is `null`.
-
 `charge.ProcessingTerms` holds what was fixed when the charge was quoted: `Percent`, the processing fee in percent of what it takes in (such as `1.75`), and `MaxForwardingPercent`, the most that passing a managed payment on to your payout address may cost, in percent of your share (`10`). It is `null` for older charges and for VeliraPay's own billing.
 
 ### Customer details
@@ -355,7 +353,7 @@ foreach (var coin in await velirapay.Payouts.SummaryAsync())
 }
 ```
 
-Your share pays the network costs of forwarding it. Where their exact amount is unknown when a payout goes out, for ETH and the other EVM chains' own coins, TRX and Lightning routing, an estimate is set aside from your share first, and `payout.MerchantNetworkReserve` says what became of it, in the payout's coin: `Reserved` is what was set aside, `PayoutCost` what forwarding cost, `SweepBudget` and `SweepCost` what was allowed for and spent sweeping VeliraPay's fee to its cold wallet afterwards, `SweepAvailable` what is left of that budget, `Held` what is still held for you, and `Residual` what was not used once every cost is known. `PayoutCost`, `SweepCost` and `Residual` are `null` until known. The residual stays owed to you and is recorded, not sent back on its own. `MerchantNetworkReserve` is `null` for older charges, Bitcoin, Litecoin, Dogecoin and Bitcoin Cash payouts, USDT and USDC paid out through forwarders, and payouts not sent yet.
+Your share pays the network costs of forwarding it. Where their exact amount is unknown when a payout goes out, for ETH and the other EVM chains' own coins and TRX, an estimate is set aside from your share first, and `payout.MerchantNetworkReserve` says what became of it, in the payout's coin: `Reserved` is what was set aside, `PayoutCost` what forwarding cost, `SweepBudget` and `SweepCost` what was allowed for and spent sweeping VeliraPay's fee to its cold wallet afterwards, `SweepAvailable` what is left of that budget, `Held` what is still held for you, and `Residual` what was not used once every cost is known. `PayoutCost`, `SweepCost` and `Residual` are `null` until known. The residual stays owed to you and is recorded, not sent back on its own. `MerchantNetworkReserve` is `null` for older charges, Bitcoin, Litecoin, Dogecoin and Bitcoin Cash payouts, USDT and USDC paid out through forwarders, and payouts not sent yet.
 
 ## Payout addresses
 

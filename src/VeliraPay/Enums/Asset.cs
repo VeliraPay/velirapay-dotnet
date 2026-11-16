@@ -10,9 +10,6 @@ public static class Asset
     /// <summary>Bitcoin, on its own chain.</summary>
     public const string BTC = "BTC";
 
-    /// <summary>Bitcoin, paid over the Lightning Network.</summary>
-    public const string BTC_LIGHTNING = "BTC_LIGHTNING";
-
     /// <summary>Litecoin.</summary>
     public const string LTC = "LTC";
 
@@ -79,7 +76,7 @@ public static class Asset
     /// <summary>Every code this version of the library knows.</summary>
     internal static readonly string[] Values =
     [
-        BTC, BTC_LIGHTNING, LTC, DOGE, BCH, ETH, XMR, SOL, BNB, TRX, USDT, USDC, USDT_TRON, USDC_BASE, USDC_POLYGON,
+        BTC, LTC, DOGE, BCH, ETH, XMR, SOL, BNB, TRX, USDT, USDC, USDT_TRON, USDC_BASE, USDC_POLYGON,
         USDT_BSC, USDC_BSC, USDT_POLYGON, USDT_ARBITRUM, USDC_ARBITRUM, ETH_BASE, ETH_ARBITRUM, POL,
     ];
 }

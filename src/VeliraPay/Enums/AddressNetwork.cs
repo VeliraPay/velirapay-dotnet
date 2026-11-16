@@ -43,7 +43,4 @@ public static class AddressNetwork
 
     /// <summary>Solana, for <see cref="Asset.SOL"/>.</summary>
     public const string Solana = "solana";
-
-    /// <summary>A Lightning address (name@domain), for <see cref="Asset.BTC_LIGHTNING"/>.</summary>
-    public const string Lightning = "lightning";
 }

@@ -75,7 +75,7 @@ public sealed class Payout : ApiResource
 
     /// <summary>
     /// What was set aside from the merchant's share for network costs whose exact amount is unknown when the payout goes out:
-    /// ETH and the other EVM chains' own coins, TRX, and Lightning routing. Null for older charges, Bitcoin, Litecoin, Dogecoin
+    /// ETH and the other EVM chains' own coins and TRX. Null for older charges, Bitcoin, Litecoin, Dogecoin
     /// and Bitcoin Cash payouts, USDT and USDC paid out through forwarders, and payouts not sent yet.
     /// </summary>
     public NetworkReserve? MerchantNetworkReserve { get; }

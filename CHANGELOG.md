@@ -2,6 +2,10 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- `Asset.BTC_LIGHTNING`, `AddressNetwork.Lightning` and `Charge.PaymentRequest` are gone, since VeliraPay no longer offers Bitcoin over Lightning. The API never returned them for anyone, as no account ever had Lightning switched on.
+
 ## 0.2.5 - 2026-11-15
 
 - An invoice must name its customer, by `InvoiceCreateOptions.CustomerName`, `CustomerEmail` or both: a name alone, such as the buyer's username on your site, is enough. `Invoices.CreateAsync()` with neither throws a `ValidationException` under `customer_name` and creates nothing. Both properties stay `string?`, and so do `Invoice.CustomerName`, `null` when only an email was given, and `Invoice.CustomerEmail`, `null` when only a name was. `CustomerEmail` is still needed with `SendEmail`, and an invoice without one still cannot be sent or reminded.
