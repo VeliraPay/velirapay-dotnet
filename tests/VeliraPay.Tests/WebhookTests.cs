@@ -52,6 +52,20 @@ public sealed class WebhookTests
     }
 
     [Fact]
+    public void AnAnswerDeliveredBeforeTypesReadsAsShortText()
+    {
+        var delivery = Fixture("webhook_charge");
+        delivery["data"]!["charge"]!["custom_fields"] = JsonNode.Parse("""[{"label":"Country","value":"GB"}]""");
+        var payload = delivery.ToJsonString();
+
+        var parsed = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret).Charge;
+
+        Assert.NotNull(parsed);
+        Assert.Equal([new CustomFieldAnswer("Country", "GB")], parsed.CustomFields);
+        Assert.Equal(QuestionType.Text, parsed.CustomFields[0].Type);
+    }
+
+    [Fact]
     public void ADeliveryWithoutTheIpCountryAndNetworkReadsThemAsNull()
     {
         var delivery = Fixture("webhook_charge");
