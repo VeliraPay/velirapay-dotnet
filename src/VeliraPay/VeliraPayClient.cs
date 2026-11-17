@@ -9,7 +9,7 @@ namespace VeliraPay;
 public sealed class VeliraPayClient
 {
     /// <summary>The version of this library.</summary>
-    public const string Version = "0.2.5";
+    public const string Version = "0.2.6";
 
     /// <summary>The address of the VeliraPay API.</summary>
     public const string DefaultBaseUrl = "https://api.velirapay.com";

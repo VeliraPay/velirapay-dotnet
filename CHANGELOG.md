@@ -2,7 +2,7 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 0.2.6 - 2026-11-17
 
 - Typed checkout questions. `CheckoutQuestionOptions` takes `Type` (one of the new `QuestionType` values: `text`, `textarea`, `number`, `email`, `phone`, `url`, `date`, `select`, `checkbox` or `country`), `Placeholder`, `Help`, a select's `Options`, `Min` and `Max` as strings, and for text a `Pattern` with its `PatternHint`, for each of up to ten questions. Only `Label` is needed now: `Required` is no longer a `required` member and is left out unless set, so `{ Label, Required }` alone is still a short text question, as before.
 - `CheckoutQuestion`, what `link.CustomFields` holds, gains the same as init-only properties: `Type` is `"text"` for a link saved before types, and the settings a question does not use are `null`. `CustomFieldAnswer`, what `charge.CustomFields` holds in the API and in webhooks, gains `Type`, `"text"` for details given when creating the charge or kept before types; `Value` stays a string. Both records keep their constructors and deconstructors. Record equality now covers the new properties too, and compares `Options` by reference.
