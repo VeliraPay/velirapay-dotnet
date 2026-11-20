@@ -171,4 +171,25 @@ public static class ActivityAction
 
     /// <summary>A member disconnected an account they signed in with. Sensitive.</summary>
     public const string SocialAccountDisconnected = "auth.social_disconnected";
+
+    /// <summary>A member created the organization.</summary>
+    public const string TeamCreated = "team.created";
+
+    /// <summary>A member deleted the organization. Sensitive.</summary>
+    public const string TeamDeleted = "team.deleted";
+
+    /// <summary>A member deleted their personal account. Sensitive.</summary>
+    public const string AccountDeleted = "auth.account_deleted";
+
+    /// <summary>A member generated new recovery codes. Sensitive.</summary>
+    public const string RecoveryCodesRegenerated = "auth.recovery_codes_regenerated";
+
+    /// <summary>A member used a recovery code. Sensitive.</summary>
+    public const string RecoveryCodeUsed = "auth.recovery_code_used";
+
+    /// <summary>A member exported account data. Sensitive.</summary>
+    public const string DataExported = "data.exported";
+
+    /// <summary>A member exported their personal data. Sensitive.</summary>
+    public const string PersonalDataExported = "auth.data_exported";
 }

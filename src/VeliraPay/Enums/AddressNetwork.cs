@@ -41,6 +41,6 @@ public static class AddressNetwork
     /// <summary>Monero, for <see cref="Asset.XMR"/>.</summary>
     public const string Monero = "monero";
 
-    /// <summary>Solana, for <see cref="Asset.SOL"/>.</summary>
+    /// <summary>Solana, for <see cref="Asset.SOL"/>, <see cref="Asset.USDT_SOLANA"/> and <see cref="Asset.USDC_SOLANA"/>.</summary>
     public const string Solana = "solana";
 }

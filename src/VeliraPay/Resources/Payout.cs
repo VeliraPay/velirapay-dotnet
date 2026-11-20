@@ -119,7 +119,7 @@ public sealed class Payout : ApiResource
 
 /// <summary>
 /// An estimate of network costs set aside from the merchant's share of a payout, in the payout's coin, and what became of it.
-/// What is left once every cost is known stays owed to the merchant and is recorded, not sent back on its own.
+/// The settlement terms for the payment determine who keeps the unused reserve.
 /// </summary>
 public sealed class NetworkReserve : ApiResource
 {
@@ -157,7 +157,7 @@ public sealed class NetworkReserve : ApiResource
     /// <summary>What is still held for the merchant, counting every cost not yet known at its most.</summary>
     public decimal Held { get; }
 
-    /// <summary>What was not used once every cost is known, owed to the merchant; null while a cost is still open.</summary>
+    /// <summary>The unused amount once every cost is known, or null while a cost is still open.</summary>
     public decimal? Residual { get; }
 }
 

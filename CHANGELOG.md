@@ -2,6 +2,12 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- Added `Asset.USDT_SOLANA` and `Asset.USDC_SOLANA` for USDT and USDC on Solana.
+- Added activity constants for organization creation and deletion, account deletion, recovery code regeneration and use, and account and personal data exports.
+- Clarified that the settlement terms for each payment determine who keeps the unused network reserve.
+
 ## 0.2.6 - 2026-11-17
 
 - Typed checkout questions. `CheckoutQuestionOptions` takes `Type` (one of the new `QuestionType` values: `text`, `textarea`, `number`, `email`, `phone`, `url`, `date`, `select`, `checkbox` or `country`), `Placeholder`, `Help`, a select's `Options`, `Min` and `Max` as strings, and for text a `Pattern` with its `PatternHint`, for each of up to ten questions. Only `Label` is needed now: `Required` is no longer a `required` member and is left out unless set, so `{ Label, Required }` alone is still a short text question, as before.

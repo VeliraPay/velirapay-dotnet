@@ -29,7 +29,9 @@ public sealed class CatalogueTests
                      "decimals": 6, "required_confirmations": 6, "confirmation_wait": "about a minute", "accepted": false, "currency": "EUR", "exchange_rate": "0.8709",
                      "minimum_amount": "10", "minimum_price": "8.71", "network_surcharge": null},
                     {"id": "NEWCOIN", "object": "asset", "name": "New", "ticker": "NEW", "network": "New", "contract_address": null, "decimals": 18, "required_confirmations": 1,
-                     "confirmation_wait": "under a minute", "accepted": null, "currency": "EUR", "exchange_rate": null, "minimum_amount": null, "minimum_price": "0.01", "network_surcharge": "2.50"}
+                     "confirmation_wait": "under a minute", "accepted": null, "currency": "EUR", "exchange_rate": null, "minimum_amount": null, "minimum_price": "0.01", "network_surcharge": "2.50"},
+                    {"id": "USDT_SOLANA", "object": "asset", "ticker": "USDT", "network": "Solana (SPL)"},
+                    {"id": "USDC_SOLANA", "object": "asset", "ticker": "USDC", "network": "Solana (SPL)"}
                 ],
                 "meta": {"mode": "live", "currencies": ["USD", "EUR"]}
             }
@@ -39,7 +41,7 @@ public sealed class CatalogueTests
 
         Assert.Equal("/v1/assets", http.LastRequest.Path);
         Assert.Equal("currency=EUR", http.LastRequest.Query);
-        Assert.Equal(3, page.Count);
+        Assert.Equal(5, page.Count);
         Assert.False(page.HasMore);
         Assert.Equal(Mode.Live, page.Mode);
         Assert.Equal([Currency.USD, Currency.EUR], page.Currencies);
@@ -72,6 +74,9 @@ public sealed class CatalogueTests
         Assert.Null(unknown.Accepted);
         Assert.Null(unknown.ExchangeRate);
         Assert.Equal(2.50m, unknown.NetworkSurcharge);
+
+        Assert.Equal(Asset.USDT_SOLANA, page[3].Asset);
+        Assert.Equal(Asset.USDC_SOLANA, page[4].Asset);
     }
 
     [Fact]

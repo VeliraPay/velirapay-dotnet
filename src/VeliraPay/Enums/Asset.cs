@@ -73,10 +73,17 @@ public static class Asset
     /// <summary>POL, on Polygon.</summary>
     public const string POL = "POL";
 
+    /// <summary>Tether USD, on Solana (SPL).</summary>
+    public const string USDT_SOLANA = "USDT_SOLANA";
+
+    /// <summary>USD Coin, on Solana (SPL).</summary>
+    public const string USDC_SOLANA = "USDC_SOLANA";
+
     /// <summary>Every code this version of the library knows.</summary>
     internal static readonly string[] Values =
     [
         BTC, LTC, DOGE, BCH, ETH, XMR, SOL, BNB, TRX, USDT, USDC, USDT_TRON, USDC_BASE, USDC_POLYGON,
         USDT_BSC, USDC_BSC, USDT_POLYGON, USDT_ARBITRUM, USDC_ARBITRUM, ETH_BASE, ETH_ARBITRUM, POL,
+        USDT_SOLANA, USDC_SOLANA,
     ];
 }
