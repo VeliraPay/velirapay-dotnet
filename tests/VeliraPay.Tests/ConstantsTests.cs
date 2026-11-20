@@ -72,6 +72,8 @@ public sealed class ConstantsTests
                 "auth.passkey_added", "auth.passkey_removed", "coupon.created", "coupon.updated", "coupon.deleted", "auth.app_connected",
                 "auth.app_disconnected", "chat.connected", "chat.updated", "chat.removed", "chat.disabled", "sanctions.matched", "sanctions.accepted",
                 "sanctions.return_requested", "auth.social_connected", "auth.social_disconnected",
+                "team.created", "team.deleted", "auth.account_deleted", "auth.recovery_codes_regenerated", "auth.recovery_code_used",
+                "data.exported", "auth.data_exported",
             ],
             Values(typeof(ActivityAction)));
         Assert.Equal("team.second_factor_requirement_changed", ActivityAction.SecondFactorRequirementChanged);
