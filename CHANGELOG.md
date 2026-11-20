@@ -2,7 +2,7 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 0.2.7 - 2026-11-20
 
 - Added `Asset.USDT_SOLANA` and `Asset.USDC_SOLANA` for USDT and USDC on Solana.
 - Added activity constants for organization creation and deletion, account deletion, recovery code regeneration and use, and account and personal data exports.
