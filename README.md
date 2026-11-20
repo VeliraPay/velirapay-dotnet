@@ -401,7 +401,11 @@ using VeliraPay;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
-var webhookSecret = builder.Configuration["VeliraPay:WebhookSecret"];
+var webhookSecret = Environment.GetEnvironmentVariable("VELIRAPAY_WEBHOOK_SECRET");
+if (string.IsNullOrWhiteSpace(webhookSecret))
+{
+    throw new InvalidOperationException("Set VELIRAPAY_WEBHOOK_SECRET.");
+}
 
 app.MapPost("/webhooks/velirapay", async (HttpRequest request) =>
 {
@@ -415,15 +419,20 @@ app.MapPost("/webhooks/velirapay", async (HttpRequest request) =>
     {
         return Results.BadRequest();
     }
+    catch (InvalidArgumentException)
+    {
+        return Results.BadRequest();
+    }
 
     // Sent when the endpoint is added or moved: it receives nothing else until it answers.
     if (webhookEvent.IsVerification)
     {
-        return Results.Text(webhookEvent.ChallengeResponse(), "application/json");
+        var challenge = webhookEvent.ChallengeResponse();
+        return challenge is null ? Results.BadRequest() : Results.Text(challenge, "application/json");
     }
 
-    // A sample from "Send test event" or WebhookEndpoints.TestAsync(), whose charge is made up.
-    if (webhookEvent.Test)
+    // Dashboard samples and test-mode payments must not fulfil live orders.
+    if (webhookEvent.Test || !webhookEvent.IsLiveMode)
     {
         return Results.Ok();
     }
@@ -438,11 +447,13 @@ app.MapPost("/webhooks/velirapay", async (HttpRequest request) =>
         // Fulfil the order.
     }
 
-    return Results.Ok();
+    return Results.StatusCode(503);
 });
 
 app.Run();
 ```
+
+Set `VELIRAPAY_WEBHOOK_SECRET` in the receiver process. The example answers challenges and skips dashboard samples and test-mode events, but returns 503 for live events until you add durable handling. Check the expected charge, amount and currency and safely store the event with its deduplication key before replacing that response with a 2xx. Use a separate test-order path when testing your integration.
 
 Where you already hold the body, `Webhook.ConstructEvent(payload, signatureHeader, secret)` takes it as a `string` or as bytes.
 
@@ -785,9 +796,9 @@ What the API does with a key:
 
 - A successful answer is replayed for 24 hours to a request repeating the key, with `WasReplayed` true. A request that failed stores nothing, so repeating it runs it again.
 - Reuse a key only to retry the same request. A new attempt needs a new key: a charge replacing one that expired, under the key of the first, would get the expired charge back for a day. Hence keys such as `order-1042-attempt-1`, not the bare order number.
-- A key covers one account, one mode, one method and one path, and every API key of that account and mode shares it. Reusing it with a different body or query string throws a `ConflictException`.
+- A key covers one account, one mode, one method and one path, and every API key of that account and mode shares it. Reusing it with a different serialized JSON body or query string throws a `ConflictException`. Keep the body bytes unchanged, including property order and whitespace, even when the decoded values would be the same.
 - A request holds its key for up to 60 seconds while it is processed; another one with the same key in that time gets a 409 with `Retry-After: 1`, which the library waits out and retries.
-- A key is at most 255 characters of printable ASCII, and not blank.
+- The API accepts at most 255 bytes. The library requires printable ASCII, where each character is one byte, and rejects blank or non-ASCII values with `InvalidArgumentException` before sending a request.
 
 An answer that carries a secret is never stored: creating an API key (`ApiKeys.CreateAsync()`) and adding a webhook endpoint (`WebhookEndpoints.CreateAsync()`) or rotating its secret (`RotateSecretAsync()`) succeed once, and a repeat with the same key, the library's own retry after a lost answer included, throws a `ConflictException` whose `WasReplayed` is true. The write landed, but its secret is gone, so recover rather than repeat with a new key:
 
