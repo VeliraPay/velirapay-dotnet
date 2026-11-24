@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using static VeliraPay.Tests.Support.TestSupport;
 
 namespace VeliraPay.Tests;
@@ -227,6 +228,16 @@ public sealed class WebhookTests
         Assert.Equal(Utc("2026-10-31T23:59:59Z"), invoice.ExpiresAt);
         Assert.Equal(["m2q7w4e9r1ty", "z8x6c4v2b0nm"], invoice.Charges.Select(charge => charge.Id));
         Assert.Null(invoice.Charges[0].AcceptedAt);
+        var (id, status, asset) = invoice.Charges[1];
+        Assert.Equal(("z8x6c4v2b0nm", "paid", "USDC"), (id, status, asset));
+        var (_, _, _, paidAt, acceptedAt) = invoice.Charges[1];
+        Assert.Equal((Utc("2026-09-22T16:40:02Z"), Utc("2026-09-22T16:40:02Z")), (paidAt, acceptedAt));
+        Assert.Equal(invoice.Charges[1], new InvoiceCharge("z8x6c4v2b0nm", "paid", "USDC", paidAt, acceptedAt));
+
+        // Written as 0.2.8 allowed, with either date left out, and read back by System.Text.Json.
+        Assert.Equal(new InvoiceCharge("z8x6c4v2b0nm", "paid", "USDC") { PaidAt = paidAt }, new InvoiceCharge("z8x6c4v2b0nm", "paid", "USDC", paidAt));
+        Assert.Equal(invoice.Charges[1], new InvoiceCharge("z8x6c4v2b0nm", "paid", "USDC", AcceptedAt: acceptedAt) { PaidAt = paidAt });
+        Assert.Equal(invoice.Charges[1], JsonSerializer.Deserialize<InvoiceCharge>(JsonSerializer.Serialize(invoice.Charges[1])));
         Assert.Equal(Utc("2026-09-22T16:40:02Z"), invoice.Charges[1].PaidAt);
         Assert.Equal(Utc("2026-09-22T16:40:02Z"), invoice.Charges[1].AcceptedAt);
         Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);

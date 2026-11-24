@@ -2,6 +2,10 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## 0.2.9 - 2026-11-24
+
+- `InvoiceCharge` is constructed and deconstructed with its three values again, as before 0.2.8, which had added `PaidAt` and `AcceptedAt` to both and so broke code compiled against 0.2.7 and code deconstructing the record. The constructor and `Deconstruct` of 0.2.8 stay beside them, `PaidAt` and `AcceptedAt` optional as they were, so code written or compiled against either release keeps working, and `System.Text.Json` reads the record through that constructor.
+
 ## 0.2.8 - 2026-11-24
 
 - Added the activity actions `auth.browser_signed_out`, `auth.email_change_undone`, `claude.linked` and `claude.unlinked`, all four among the sensitive ones.

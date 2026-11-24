@@ -453,7 +453,7 @@ app.MapPost("/webhooks/velirapay", async (HttpRequest request) =>
 app.Run();
 ```
 
-Set `VELIRAPAY_WEBHOOK_SECRET` in the receiver process. The example answers challenges and skips dashboard samples and test-mode events, but returns 503 for live events until you add durable handling. Check the expected charge, amount and currency and safely store the event with its deduplication key before replacing that response with a 2xx. Use a separate test-order path when testing your integration.
+Set `VELIRAPAY_WEBHOOK_SECRET` in the receiver process. The example answers challenges and skips dashboard samples and test-mode events, but returns 503 for live events until you add durable handling. Check the expected charge, amount and currency and safely store the event with its deduplication key before replacing that response with a 2xx. Before fulfilling, also make sure the charge is the one you saved for the order and that its `AcceptedAt` is null: a short or late payment you accepted as paid in the dashboard, perhaps only to refund it, is yours to decide on. A delivery first made before 24 November 2026 has no such field, so read the charge from the API when it is missing. Use a separate test-order path when testing your integration.
 
 Where you already hold the body, `Webhook.ConstructEvent(payload, signatureHeader, secret)` takes it as a `string` or as bytes.
 
@@ -794,10 +794,10 @@ var replayed = velirapay.LastResponse?.WasReplayed; // true when the API answere
 
 What the API does with a key:
 
-- A successful answer is replayed for 24 hours to a request repeating the key, with `WasReplayed` true. A request that failed stores nothing, so repeating it runs it again.
+- A successful answer is replayed for 24 hours to a request repeating the key, with `WasReplayed` true. A request the API refused (4xx), or that failed before anything was saved, stores nothing, so repeating it runs it again. One that failed on the API's side after something was saved, or whose answer never came back, keeps its key: a repeat is answered with a conflict (409) that is not a replay, so read the object and send the request under a new key.
 - Reuse a key only to retry the same request. A new attempt needs a new key: a charge replacing one that expired, under the key of the first, would get the expired charge back for a day. Hence keys such as `order-1042-attempt-1`, not the bare order number.
 - A key covers one account, one mode, one method and one path, and every API key of that account and mode shares it. Reusing it with a different serialized JSON body or query string throws a `ConflictException`. Keep the body bytes unchanged, including property order and whitespace, even when the decoded values would be the same.
-- A request holds its key for up to 60 seconds while it is processed; another one with the same key in that time gets a 409 with `Retry-After: 1`, which the library waits out and retries.
+- A request holds its key for up to three minutes while it is processed; another one with the same key in that time gets a 409 with `Retry-After: 1`, which the library waits out and retries.
 - The API accepts at most 255 bytes. The library requires printable ASCII, where each character is one byte, and rejects blank or non-ASCII values with `InvalidArgumentException` before sending a request.
 
 An answer that carries a secret is never stored: creating an API key (`ApiKeys.CreateAsync()`) and adding a webhook endpoint (`WebhookEndpoints.CreateAsync()`) or rotating its secret (`RotateSecretAsync()`) succeed once, and a repeat with the same key, the library's own retry after a lost answer included, throws a `ConflictException` whose `WasReplayed` is true. The write landed, but its secret is gone, so recover rather than repeat with a new key:

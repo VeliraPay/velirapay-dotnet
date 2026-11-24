@@ -4,7 +4,10 @@
         <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>VeliraPay</RootNamespace>
         <AssemblyName>VeliraPay</AssemblyName>
-        <Version>0.2.8</Version>
+        <Version>0.2.9</Version>
+        <!-- Packing fails when the public surface breaks what the last release shipped. -->
+        <EnablePackageValidation>true</EnablePackageValidation>
+        <PackageValidationBaselineVersion>0.2.8</PackageValidationBaselineVersion>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <IsAotCompatible>true</IsAotCompatible>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
