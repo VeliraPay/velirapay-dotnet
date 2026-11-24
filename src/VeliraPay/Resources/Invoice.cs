@@ -26,7 +26,7 @@ public sealed class Invoice : ApiResource
         ExpiresAt = JsonValues.Date(data, "expires_at");
         HostedUrl = JsonValues.String(data, "hosted_url");
         DocumentUrl = JsonValues.NullableString(data, "document_url");
-        Charges = [.. JsonValues.Records(data, "charges").Select(charge => new InvoiceCharge(JsonValues.String(charge, "id", JsonValues.String(charge, "code")), JsonValues.String(charge, "status"), JsonValues.String(charge, "asset")))];
+        Charges = [.. JsonValues.Records(data, "charges").Select(charge => new InvoiceCharge(JsonValues.String(charge, "id", JsonValues.String(charge, "code")), JsonValues.String(charge, "status"), JsonValues.String(charge, "asset"), JsonValues.Date(charge, "paid_at"), JsonValues.Date(charge, "accepted_at")))];
         SentAt = JsonValues.Date(data, "sent_at");
         ViewedAt = JsonValues.Date(data, "viewed_at");
         PaidAt = JsonValues.Date(data, "paid_at");
@@ -120,7 +120,9 @@ public sealed class Invoice : ApiResource
 /// <param name="Id">The charge's id.</param>
 /// <param name="Status">One of the <see cref="ChargeStatus"/> values.</param>
 /// <param name="Asset">The coin the customer tried.</param>
-public sealed record InvoiceCharge(string Id, string Status, string Asset);
+/// <param name="PaidAt">When the charge was paid.</param>
+/// <param name="AcceptedAt">When you accepted a short or late payment as paid, which is how the charge became paid; null for a charge the payment itself covered.</param>
+public sealed record InvoiceCharge(string Id, string Status, string Asset, DateTimeOffset? PaidAt = null, DateTimeOffset? AcceptedAt = null);
 
 /// <summary>A line on an itemised invoice.</summary>
 public sealed class InvoiceItem : ApiResource

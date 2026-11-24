@@ -156,6 +156,7 @@ public sealed class ChargeTests
         Assert.Equal("https://velirapay.com/c/k3v9x2m7q8wz/receipt", charge.ReceiptUrl);
         Assert.Equal(Utc("2026-09-20T10:25:00Z"), charge.ExpiresAt);
         Assert.Equal(Utc("2026-09-20T10:05:41Z"), charge.PaidAt);
+        Assert.Null(charge.AcceptedAt);
         Assert.Equal(Utc("2026-09-20T09:55:00Z"), charge.CreatedAt);
     }
 

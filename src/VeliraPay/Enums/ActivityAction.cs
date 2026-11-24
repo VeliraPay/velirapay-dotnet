@@ -118,11 +118,17 @@ public static class ActivityAction
     /// <summary>A member signed out of every other browser. Sensitive.</summary>
     public const string SignedOutElsewhere = "auth.signed_out_elsewhere";
 
+    /// <summary>A member signed one of their other browsers out. Sensitive.</summary>
+    public const string BrowserSignedOut = "auth.browser_signed_out";
+
     /// <summary>A member gave a wrong two-factor code. Sensitive.</summary>
     public const string TwoFactorFailed = "auth.two_factor_failed";
 
     /// <summary>A member changed their email address. Sensitive.</summary>
     public const string EmailChanged = "auth.email_changed";
+
+    /// <summary>A change of a member's email address was undone from the old address. Sensitive.</summary>
+    public const string EmailChangeUndone = "auth.email_change_undone";
 
     /// <summary>A member added a passkey. Sensitive.</summary>
     public const string PasskeyAdded = "auth.passkey_added";
@@ -192,4 +198,10 @@ public static class ActivityAction
 
     /// <summary>A member exported their personal data. Sensitive.</summary>
     public const string PersonalDataExported = "auth.data_exported";
+
+    /// <summary>The account linked a Claude organization, which is billed for what Claude does for it. Sensitive.</summary>
+    public const string ClaudeLinked = "claude.linked";
+
+    /// <summary>The account's Claude organization was unlinked. Sensitive.</summary>
+    public const string ClaudeUnlinked = "claude.unlinked";
 }

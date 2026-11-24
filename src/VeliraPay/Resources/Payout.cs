@@ -119,7 +119,7 @@ public sealed class Payout : ApiResource
 
 /// <summary>
 /// An estimate of network costs set aside from the merchant's share of a payout, in the payout's coin, and what became of it.
-/// The settlement terms for the payment determine who keeps the unused reserve.
+/// What the reserve does not use is not sent back: it is kept as part of the payout's network cost.
 /// </summary>
 public sealed class NetworkReserve : ApiResource
 {

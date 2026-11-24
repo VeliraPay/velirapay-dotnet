@@ -226,6 +226,9 @@ public sealed class WebhookTests
         Assert.Null(invoice.SuccessMessage);
         Assert.Equal(Utc("2026-10-31T23:59:59Z"), invoice.ExpiresAt);
         Assert.Equal(["m2q7w4e9r1ty", "z8x6c4v2b0nm"], invoice.Charges.Select(charge => charge.Id));
+        Assert.Null(invoice.Charges[0].AcceptedAt);
+        Assert.Equal(Utc("2026-09-22T16:40:02Z"), invoice.Charges[1].PaidAt);
+        Assert.Equal(Utc("2026-09-22T16:40:02Z"), invoice.Charges[1].AcceptedAt);
         Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);
     }
 

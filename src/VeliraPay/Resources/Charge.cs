@@ -44,6 +44,7 @@ public sealed class Charge : ApiResource
         ReceiptUrl = JsonValues.NullableString(data, "receipt_url");
         ExpiresAt = JsonValues.Date(data, "expires_at");
         PaidAt = JsonValues.Date(data, "paid_at");
+        AcceptedAt = JsonValues.Date(data, "accepted_at");
         CreatedAt = JsonValues.Date(data, "created_at");
         Coupon = JsonValues.NullableString(data, "coupon");
         DiscountAmount = JsonValues.NullableDecimal(data, "discount_amount");
@@ -162,6 +163,9 @@ public sealed class Charge : ApiResource
 
     /// <summary>When the charge was paid.</summary>
     public DateTimeOffset? PaidAt { get; }
+
+    /// <summary>When you accepted a short or late payment as paid, which is how the charge became paid; null for a charge the payment itself covered.</summary>
+    public DateTimeOffset? AcceptedAt { get; }
 
     /// <summary>When the charge was created.</summary>
     public DateTimeOffset? CreatedAt { get; }

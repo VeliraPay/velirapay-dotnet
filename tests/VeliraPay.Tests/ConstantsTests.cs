@@ -68,12 +68,13 @@ public sealed class ConstantsTests
                 "payment_link.updated", "payment_link.archived", "payment_link.restored", "member.invitation_canceled", "charge.payment_requested",
                 "webhook.disabled", "charge.canceled", "charge.accepted", "refund.recorded", "invoice.voided", "plan.payment_started",
                 "plan.subscription_canceled", "plan.subscription_resumed", "auth.signed_in", "auth.sign_in_failed", "auth.password_changed",
-                "auth.two_factor_enabled", "auth.two_factor_disabled", "auth.signed_out_elsewhere", "auth.two_factor_failed", "auth.email_changed",
+                "auth.two_factor_enabled", "auth.two_factor_disabled", "auth.signed_out_elsewhere", "auth.browser_signed_out", "auth.two_factor_failed", "auth.email_changed",
+                "auth.email_change_undone",
                 "auth.passkey_added", "auth.passkey_removed", "coupon.created", "coupon.updated", "coupon.deleted", "auth.app_connected",
                 "auth.app_disconnected", "chat.connected", "chat.updated", "chat.removed", "chat.disabled", "sanctions.matched", "sanctions.accepted",
                 "sanctions.return_requested", "auth.social_connected", "auth.social_disconnected",
                 "team.created", "team.deleted", "auth.account_deleted", "auth.recovery_codes_regenerated", "auth.recovery_code_used",
-                "data.exported", "auth.data_exported",
+                "data.exported", "auth.data_exported", "claude.linked", "claude.unlinked",
             ],
             Values(typeof(ActivityAction)));
         Assert.Equal("team.second_factor_requirement_changed", ActivityAction.SecondFactorRequirementChanged);
