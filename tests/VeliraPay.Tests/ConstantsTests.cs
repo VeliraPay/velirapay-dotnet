@@ -66,7 +66,7 @@ public sealed class ConstantsTests
                 "business_details.updated", "api_key.created", "api_key.updated", "api_key.revoked", "webhook.created", "webhook.updated", "webhook.deleted",
                 "webhook.secret_rotated", "member.invited", "member.joined", "member.role_changed", "member.removed", "payment_link.created",
                 "payment_link.updated", "payment_link.archived", "payment_link.restored", "member.invitation_canceled", "charge.payment_requested",
-                "webhook.disabled", "charge.canceled", "charge.accepted", "refund.recorded", "invoice.voided", "plan.payment_started",
+                "webhook.disabled", "charge.canceled", "charge.accepted", "refund.recorded", "refund.requested", "refund.canceled", "invoice.voided", "plan.payment_started",
                 "plan.subscription_canceled", "plan.subscription_resumed", "auth.signed_in", "auth.sign_in_failed", "auth.password_changed",
                 "auth.two_factor_enabled", "auth.two_factor_disabled", "auth.signed_out_elsewhere", "auth.browser_signed_out", "auth.two_factor_failed", "auth.email_changed",
                 "auth.email_change_undone",
@@ -74,11 +74,36 @@ public sealed class ConstantsTests
                 "auth.app_disconnected", "chat.connected", "chat.updated", "chat.removed", "chat.disabled", "sanctions.matched", "sanctions.accepted",
                 "sanctions.return_requested", "auth.social_connected", "auth.social_disconnected",
                 "team.created", "team.deleted", "auth.account_deleted", "auth.recovery_codes_regenerated", "auth.recovery_code_used",
-                "data.exported", "auth.data_exported", "claude.linked", "claude.unlinked",
+                "data.exported", "auth.data_exported", "claude.linked", "claude.unlinked", "accounting.connected", "accounting.disconnected",
             ],
             Values(typeof(ActivityAction)));
         Assert.Equal("team.second_factor_requirement_changed", ActivityAction.SecondFactorRequirementChanged);
         Assert.Equal("member.invitation_canceled", ActivityAction.InvitationCanceled);
+    }
+
+    [Fact]
+    public void TheSensitiveActivityActionsAreMarkedSo()
+    {
+        // ActivityAction::isSensitive(), which the log lists with action=sensitive.
+        string[] sensitive =
+        [
+            "wallets.changed", "wallets.api_access_changed", "team.second_factor_requirement_changed", "api_key.created", "api_key.updated", "api_key.revoked",
+            "webhook.secret_rotated", "member.invited", "member.joined", "member.role_changed", "member.removed", "auth.sign_in_failed", "auth.password_changed",
+            "auth.two_factor_enabled", "auth.two_factor_disabled", "auth.signed_out_elsewhere", "auth.browser_signed_out", "auth.two_factor_failed",
+            "auth.email_changed", "auth.email_change_undone", "auth.passkey_added", "auth.passkey_removed", "member.invitation_canceled", "webhook.disabled",
+            "auth.app_connected", "auth.app_disconnected", "chat.disabled", "sanctions.matched", "sanctions.accepted", "sanctions.return_requested",
+            "auth.social_connected", "auth.social_disconnected", "team.deleted", "auth.account_deleted", "auth.recovery_codes_regenerated",
+            "auth.recovery_code_used", "data.exported", "auth.data_exported", "claude.linked", "claude.unlinked", "accounting.connected", "accounting.disconnected",
+        ];
+
+        Assert.Equal([.. sensitive.Order(StringComparer.Ordinal)], MarkedSensitive(typeof(ActivityAction)).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void EveryRefundRequestStatusHasAConstant()
+    {
+        // App\Enums\RefundRequestStatus
+        Assert.Equal(["awaiting_address", "awaiting_transfer", "confirming", "refunded", "canceled", "expired"], Values(typeof(RefundRequestStatus)));
     }
 
     [Fact]
@@ -97,4 +122,18 @@ public sealed class ConstantsTests
     /// <summary>The values of a class's string constants, in the order they are declared.</summary>
     private static List<string> Values(Type constants)
         => [.. constants.GetFields(BindingFlags.Public | BindingFlags.Static).Where(field => field.IsLiteral).OrderBy(field => field.MetadataToken).Select(field => (string)field.GetRawConstantValue()!)];
+
+    /// <summary>The values of a class's string constants whose documentation, in the XML file built beside the library, ends with "Sensitive.".</summary>
+    private static IEnumerable<string> MarkedSensitive(Type constants)
+    {
+        var documentation = System.Xml.Linq.XDocument.Load(System.IO.Path.ChangeExtension(constants.Assembly.Location, ".xml"));
+        var marked = documentation.Descendants("member")
+            .Where(member => member.Element("summary")?.Value.Trim().EndsWith("Sensitive.", StringComparison.Ordinal) == true)
+            .Select(member => (string)member.Attribute("name")!)
+            .ToHashSet(StringComparer.Ordinal);
+
+        return constants.GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.IsLiteral && marked.Contains($"F:{constants.FullName}.{field.Name}"))
+            .Select(field => (string)field.GetRawConstantValue()!);
+    }
 }

@@ -226,6 +226,12 @@ public sealed class WebhookTests
         Assert.Null(invoice.CancelUrl);
         Assert.Null(invoice.SuccessMessage);
         Assert.Equal(Utc("2026-10-31T23:59:59Z"), invoice.ExpiresAt);
+        Assert.Equal(1305.00m, invoice.Amount);
+        Assert.Equal(1250.00m, invoice.Subtotal);
+        Assert.Equal(125.00m, invoice.Discount);
+        Assert.Equal(10.00m, invoice.DiscountPercent);
+        Assert.Equal(180.00m, invoice.Tax);
+        Assert.Equal(new decimal?[] { 20.00m, null }, invoice.Items.Select(item => item.TaxRate));
         Assert.Equal(["m2q7w4e9r1ty", "z8x6c4v2b0nm"], invoice.Charges.Select(charge => charge.Id));
         Assert.Null(invoice.Charges[0].AcceptedAt);
         var (id, status, asset) = invoice.Charges[1];
@@ -248,8 +254,9 @@ public sealed class WebhookTests
     {
         var delivery = Fixture("webhook_invoice");
         delivery["data"]!["invoice"] = delivery["data"]!["invoice"]!.AsObject()
-            .Without("expires_at", "overdue", "document_url", "success_url", "cancel_url", "success_message")
+            .Without("expires_at", "overdue", "document_url", "success_url", "cancel_url", "success_message", "subtotal", "discount", "discount_percent", "tax")
             .With(("customer_name", null));
+        delivery["data"]!["invoice"]!["items"] = new JsonArray([.. delivery["data"]!["invoice"]!["items"]!.AsArray().Select(item => item!.AsObject().Without("tax_rate"))]);
         var payload = delivery.ToJsonString();
 
         var invoice = Webhook.ConstructEvent(payload, Webhook.GenerateSignatureHeader(payload, Secret), Secret).Invoice;
@@ -263,6 +270,12 @@ public sealed class WebhookTests
         Assert.Null(invoice.SuccessUrl);
         Assert.Null(invoice.ExpiresAt);
         Assert.Null(invoice.SuccessMessage);
+        Assert.Null(invoice.Subtotal);
+        Assert.Null(invoice.Discount);
+        Assert.Null(invoice.DiscountPercent);
+        Assert.Null(invoice.Tax);
+        Assert.All(invoice.Items, item => Assert.Null(item.TaxRate));
+        Assert.Equal(1000.00m, invoice.Items[0].Total);
     }
 
     [Fact]

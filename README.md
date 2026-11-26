@@ -13,6 +13,7 @@ The official .NET library for [VeliraPay](https://velirapay.com), the crypto pay
 - [Supported coins](#supported-coins)
 - [Charges](#charges)
 - [Short and late payments](#short-and-late-payments)
+- [Refunds](#refunds)
 - [Invoices](#invoices)
 - [Payment links](#payment-links)
 - [Coupons](#coupons)
@@ -216,14 +217,48 @@ var refunded = await velirapay.Charges.RecordRefundAsync("k3v9x2m7q8wz", new Ref
     Reason = "Returned item",
 });
 
-var refunds = refunded.Refunds; // each with its Amount, Txid, Reason and ExplorerUrl; RefundedAmount adds them up
+var refunds = refunded.Refunds; // each with its Amount, Txid, Reason, ExplorerUrl and credit note; RefundedAmount adds them up
 ```
 
-`AcceptAsync()` throws a `ConflictException` for any other charge, and for an underpaid one while a payment to it is still confirming. A refund of an underpaid charge or a late payment needs it accepted first, and the network surcharge is never refundable: `RecordRefundAsync()` throws a `ValidationException` otherwise.
+`AcceptAsync()` throws a `ConflictException` for any other charge, and for an underpaid one while a payment to it is still confirming. A refund of an underpaid charge or a late payment needs it accepted first, and the network surcharge is never refundable: `RecordRefundAsync()` throws a `ValidationException` otherwise. To have VeliraPay ask the customer for the address and follow the transfer, [start the refund](#refunds) instead.
 
 Each arrives as the `charge.late_payment` webhook: a transfer to an expired or canceled charge as soon as it is seen, and a late top-up to an underpaid charge once it has confirmed. A transfer on top of a charge already paid sends `charge.late_payment` too, but is counted automatically and waits for nothing.
 
 TRX and USDT on Tron (`Asset.USDT_TRON`) share deposit addresses. When a charge in one of them expired or was canceled with nothing of its own coin while the other arrived, VeliraPay quotes it again in the coin that arrived: `Asset`, `AssetAmount`, `ExchangeRate` and `NetworkSurcharge` then describe that coin, `FiatAmount` stays the same, and `charge.SwitchedFrom` keeps the first quote, with its `Asset`, `AssetAmount`, `ExchangeRate` and `SwitchedAt`. The transfer then waits as a late payment, and once you accept it `charge.paid` follows in the new coin. A charge is quoted again at most once, and `SwitchedFrom` is `null` for every other charge, so read the coin from each charge or webhook rather than remembering the one you created it with.
+
+## Refunds
+
+A refund goes from your own wallet, since a payment forwarded to you cannot be pulled back. Start one, and VeliraPay asks the customer for the address, watches it for your transfer and records the refund, with a credit note, once the transfer has its confirmations:
+
+```csharp
+var refund = await velirapay.Charges.StartRefundAsync("k3v9x2m7q8wz", new RefundRequestCreateOptions
+{
+    Amount = 0.0005m, // in the charge's coin, set aside at once
+    Reason = "Returned item",
+    // Address = "bc1q…", when the customer already gave you one
+}, new RequestOptions { IdempotencyKey = "refund-1042-1" });
+
+var link = refund.AddressUrl; // emailed to the charge's customer email; send it yourself when there is none
+
+// Once the customer gave the address, refund.Status is RefundRequestStatus.AwaitingTransfer: send refund.Amount to refund.Address.
+// Giving the hash looks at the chain straight away, rather than waiting for the next look.
+var confirming = await velirapay.Charges.MarkRefundSentAsync("k3v9x2m7q8wz", refund.Id, new RefundSentOptions { Txid = "7d1c5e9a…" });
+
+// Or record it on your word, for a transfer the chain is not seen to carry, such as one in Monero.
+var recorded = await velirapay.Charges.CompleteRefundAsync("k3v9x2m7q8wz", refund.Id, new RefundCompleteOptions { Txid = "7d1c5e9a…" });
+var creditNote = recorded.Refund?.CreditNoteUrl; // with its Number ("CN-0001") and FiatAmount
+
+await velirapay.Charges.SetRefundAddressAsync("k3v9x2m7q8wz", refund.Id, new RefundAddressOptions { Address = "bc1q…" }); // one they gave you some other way
+await velirapay.Charges.ResendRefundLinkAsync("k3v9x2m7q8wz", refund.Id); // email the link again
+await velirapay.Charges.CancelRefundAsync("k3v9x2m7q8wz", refund.Id);     // frees what it set aside
+
+var started = await velirapay.Charges.RefundRequestsAsync("k3v9x2m7q8wz"); // newest first
+var again = await velirapay.Charges.RetrieveRefundRequestAsync("k3v9x2m7q8wz", refund.Id);
+```
+
+A refund request moves from `RefundRequestStatus.AwaitingAddress` through `AwaitingTransfer` and `Confirming`, which `IsOpen` covers and during which what it set aside cannot be refunded twice, to `Refunded`, with the refund in `Refund` and `IsRefunded` true. It ends `Canceled` when you stop it and `Expired` when the customer never gave the address before the link lapsed. `DetectedAmount`, `Txid` and `Confirmations` say what the chain shows. The refund's `ConfirmedOnChainAt` is when the chain showed it landing, and `null` for one recorded on your word.
+
+The amount can be no more than what is left to refund: what the charge took in, less its network surcharge, earlier refunds and what other open refund requests set aside, and nothing while it is underpaid or holds a late payment, or `StartRefundAsync()` throws a `ValidationException`. The calls that take an address throw one too for an address on another network or mode, a deposit address or one on the sanctions list, and those that take a hash for one that already stands for a payment, a payout or another refund. A refund no longer at the step a call is for throws a `ConflictException`: `SetRefundAddressAsync()` once it has its address, `MarkRefundSentAsync()` unless it waits for your transfer or is confirming, `ResendRefundLinkAsync()` unless it waits for the address or when the email could not go, and `CompleteRefundAsync()` and `CancelRefundAsync()` once it is no longer open. They all need `charges:refund`, which full access includes. Watching for the transfer is best effort, so `CompleteRefundAsync()` is always there to record it yourself.
 
 ## Invoices
 
@@ -258,6 +293,26 @@ var hers = await velirapay.Invoices.ListAsync(new InvoiceListOptions { Search = 
 ```
 
 Give `Amount` instead of `Items` to bill a single total. An invoice takes no coupon, and the charges made to pay it, one per coin the customer tried, are in `invoice.Charges`.
+
+An itemised invoice can carry tax and a discount. Each line takes a `TaxRate` in percent, added on top of its price after any discount, and the invoice either `DiscountPercent` or `DiscountAmount`, taken off the items before tax:
+
+```csharp
+var taxed = await velirapay.Invoices.CreateAsync(new InvoiceCreateOptions
+{
+    CustomerEmail = "grace@example.com",
+    Currency = Currency.EUR,
+    Items =
+    [
+        new InvoiceItemOptions { Description = "Consulting", Quantity = 10, UnitAmount = 100.00m, TaxRate = 20m },
+        new InvoiceItemOptions { Description = "Hosting", Quantity = 1, UnitAmount = 250.00m },
+    ],
+    DiscountPercent = 10m, // or DiscountAmount = 50.00m, in the invoice's currency
+});
+
+var total = taxed.Amount; // 1305.00: Subtotal 1250.00, less Discount 125.00, plus Tax 180.00
+```
+
+The invoice reads them back as `Subtotal`, `Discount`, `DiscountPercent` and `Tax`, and each item as `TaxRate`, all `null` for an invoice or a line without them. `Amount` is what the customer is charged. A discount needs `Items`, and giving both kinds throws a `ValidationException`. The API ignored `tax_rate`, `discount_percent` and `discount_amount` before 26 November 2026, so code that already sent them through `AddExtraParam()` now bills a different total.
 
 An invoice names its customer by `CustomerName`, `CustomerEmail` or both. A name alone is enough, such as the buyer's username on your site (`CustomerName = "buyer_1042"`); leaving out both throws a `ValidationException`, whose `FirstError("customer_name")` says so, and creates nothing. `invoice.CustomerName` is `null` when only an email was given, and `invoice.CustomerEmail` when only a name was. Only an invoice with an email can be emailed: `CreateAsync()` with `SendEmail` but no `CustomerEmail` throws a `ValidationException` and creates nothing, and `SendAsync()` on an invoice without one throws a `ValidationException` too. `SuccessMessage` is what the customer is told once they have paid, in place of your account's own message.
 
@@ -528,7 +583,7 @@ await velirapay.WebhookEndpoints.RetryDeliveryAsync(endpoint.Id, "9d2e0b8a-…")
 await velirapay.WebhookEndpoints.DeleteAsync(endpoint.Id);
 ```
 
-Adding an endpoint, giving one a new URL, `VerifyAsync()`, `TestAsync()` and `RetryDeliveryAsync()` each send the endpoint a request, so together they are limited to 10 a minute per key. Past that the API answers 429: a short wait is [retried](#retries-and-idempotency) for you, and a longer one throws a `RateLimitException` whose `RetryAfter` says how long to wait. Deliveries are kept for 30 days, and webhook deliveries are the one paged list without an `IteratorAsync()` ([Lists and pagination](#lists-and-pagination)).
+Adding an endpoint, giving one a new URL, `VerifyAsync()`, `TestAsync()` and `RetryDeliveryAsync()` each send the endpoint a request, so together they are limited to 10 a minute per key. Past that the API answers 429: a short wait is [retried](#retries-and-idempotency) for you, and a longer one throws a `RateLimitException` whose `RetryAfter` says how long to wait. Deliveries are kept for 30 days, and like a charge's refund requests they are a paged list without an `IteratorAsync()` ([Lists and pagination](#lists-and-pagination)).
 
 If the answer that adds an endpoint or rotates its secret is lost, its secret is gone: see [Retries and idempotency](#retries-and-idempotency).
 
@@ -665,7 +720,7 @@ var isNew = payment.Started;        // false when a payment in that coin was alr
 
 | Property | Methods |
 | --- | --- |
-| `Charges` | `CreateAsync`, `RetrieveAsync`, `ListAsync`, `IteratorAsync`, `SendAsync`, `CancelAsync`, `AcceptAsync`, `RecordRefundAsync`, `SimulateAsync` |
+| `Charges` | `CreateAsync`, `RetrieveAsync`, `ListAsync`, `IteratorAsync`, `SendAsync`, `CancelAsync`, `AcceptAsync`, `RecordRefundAsync`, `SimulateAsync`, `RefundRequestsAsync`, `RetrieveRefundRequestAsync`, `StartRefundAsync`, `SetRefundAddressAsync`, `MarkRefundSentAsync`, `CompleteRefundAsync`, `ResendRefundLinkAsync`, `CancelRefundAsync` |
 | `Invoices` | `CreateAsync`, `RetrieveAsync`, `ListAsync`, `IteratorAsync`, `SendAsync`, `VoidAsync` |
 | `PaymentLinks` | `CreateAsync`, `RetrieveAsync`, `UpdateAsync`, `ListAsync`, `IteratorAsync`, `ArchiveAsync`, `RestoreAsync` |
 | `Coupons` | `CreateAsync`, `RetrieveAsync`, `UpdateAsync`, `ListAsync`, `IteratorAsync`, `DeleteAsync` |
@@ -696,7 +751,7 @@ Values the API names are strings, with constants in static classes, so a value t
 | --- | --- |
 | `Asset` | The coins, each on one network, such as `Asset.BTC`, `Asset.USDT` (Ethereum) and `Asset.USDT_TRON` |
 | `Currency` | `USD`, `EUR`, `GBP`, `CAD`, `AUD`, `CHF`, `TRY` |
-| `ChargeStatus`, `InvoiceStatus`, `PaymentLinkStatus`, `PayoutStatus`, `WebhookDeliveryStatus` | The states of each, such as `ChargeStatus.Paid` |
+| `ChargeStatus`, `RefundRequestStatus`, `InvoiceStatus`, `PaymentLinkStatus`, `PayoutStatus`, `WebhookDeliveryStatus` | The states of each, such as `ChargeStatus.Paid` |
 | `EventType` | The events of webhooks and the events API, such as `EventType.ChargePaid` |
 | `PricingType` | `Fixed` or `Open`, for payment links |
 | `AddressNetwork` | The networks payout addresses are kept for, such as `AddressNetwork.Evm` |
@@ -724,7 +779,7 @@ var total = page.Total;
 var next = page.HasMore ? await page.NextPageAsync() : null;
 ```
 
-`IteratorAsync()` walks every page, fetching each one as it is reached. Every paged list has one but webhook deliveries, whose first page walks on with `AutoPagingIteratorAsync()`:
+`IteratorAsync()` walks every page, fetching each one as it is reached. Every paged list has one but webhook deliveries and a charge's refund requests, whose first page walks on with `AutoPagingIteratorAsync()`:
 
 ```csharp
 await foreach (var charge in velirapay.Charges.IteratorAsync(new ChargeListOptions { Status = ChargeStatus.Paid }))

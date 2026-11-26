@@ -16,7 +16,7 @@ public static class ApiKeyPermission
     /// <summary>Accept short and late payments.</summary>
     public const string ChargesAccept = "charges:accept";
 
-    /// <summary>Record refunds.</summary>
+    /// <summary>Refund customers from your own wallet: ask them for the address, follow the transfer and record the refund. It moves no money.</summary>
     public const string ChargesRefund = "charges:refund";
 
     /// <summary>Read invoices.</summary>

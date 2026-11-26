@@ -62,6 +62,11 @@ public sealed class InvoiceAndLinkTests
         Assert.Equal(2.5m, invoice.Items[1].Quantity);
         Assert.Equal(100.00m, invoice.Items[1].UnitAmount);
         Assert.Equal(250.00m, invoice.Items[1].Total);
+        Assert.Null(invoice.Items[1].TaxRate);
+        Assert.Null(invoice.Subtotal);
+        Assert.Null(invoice.Discount);
+        Assert.Null(invoice.DiscountPercent);
+        Assert.Null(invoice.Tax);
         Assert.Equal(new DateOnly(2026, 10, 15), invoice.DueAt);
         Assert.Equal(Utc("2026-10-31T23:59:59Z"), invoice.ExpiresAt);
         Assert.Equal("https://velirapay.com/i/w7c2h5j9d3kx", invoice.HostedUrl);
@@ -72,6 +77,67 @@ public sealed class InvoiceAndLinkTests
         Assert.Equal([new InvoiceCharge("m2q7w4e9r1ty", "expired", "ETH")], invoice.Charges);
         Assert.Equal(Utc("2026-09-21T08:00:00Z"), invoice.SentAt);
         Assert.Null(invoice.PaidAt);
+    }
+
+    [Fact]
+    public async Task AnInvoiceIsCreatedWithTaxOnItsLinesAndADiscountAsDecimalStrings()
+    {
+        var http = new MockHttp()
+            .Json(Data(Fixture("invoice").With(("amount", "1305.00"), ("subtotal", "1250.00"), ("discount", "125.00"), ("discount_percent", "10.00"), ("tax", "180.00"))), 201)
+            .Json(Data(Fixture("invoice").With(("amount", "1299.00"), ("subtotal", "1250.00"), ("discount", "50.00"), ("tax", "99.00"))), 201);
+        var client = Client(http);
+
+        var invoice = await client.Invoices.CreateAsync(new InvoiceCreateOptions
+        {
+            CustomerName = "Grace Hopper",
+            Currency = Currency.USD,
+            Items =
+            [
+                new InvoiceItemOptions { Description = "Consulting", Quantity = 10, UnitAmount = 100.00m, TaxRate = 20.00m },
+                new InvoiceItemOptions { Description = "Hosting", Quantity = 2.5m, UnitAmount = 100.00m },
+            ],
+            DiscountPercent = 10.00m,
+        });
+
+        Assert.Equal(
+            """{"customer_name":"Grace Hopper","currency":"USD","items":[{"description":"Consulting","quantity":"10","unit_amount":"100","tax_rate":"20"},{"description":"Hosting","quantity":"2.5","unit_amount":"100"}],"discount_percent":"10"}""",
+            http.LastRequest.Body);
+        Assert.Equal(1305.00m, invoice.Amount);
+        Assert.Equal(1250.00m, invoice.Subtotal);
+        Assert.Equal(125.00m, invoice.Discount);
+        Assert.Equal(10.00m, invoice.DiscountPercent);
+        Assert.Equal(180.00m, invoice.Tax);
+
+        var fixedDiscount = await client.Invoices.CreateAsync(new InvoiceCreateOptions
+        {
+            CustomerName = "Grace Hopper",
+            Currency = Currency.USD,
+            Items = [new InvoiceItemOptions { Description = "Consulting", Quantity = 1, UnitAmount = 1250.00m, TaxRate = 8.25m }, new InvoiceItemOptions { Description = "Setup", Quantity = 1, UnitAmount = 0m, TaxRate = 0m }],
+            DiscountAmount = 50.00m,
+        });
+
+        Assert.Equal(
+            """{"customer_name":"Grace Hopper","currency":"USD","items":[{"description":"Consulting","quantity":"1","unit_amount":"1250","tax_rate":"8.25"},{"description":"Setup","quantity":"1","unit_amount":"0","tax_rate":"0"}],"discount_amount":"50"}""",
+            http.LastRequest.Body);
+        Assert.Equal(50.00m, fixedDiscount.Discount);
+        Assert.Null(fixedDiscount.DiscountPercent);
+        Assert.Equal(99.00m, fixedDiscount.Tax);
+    }
+
+    [Fact]
+    public void AnInvoiceFromBeforeTaxAndDiscountsReadsThemAsNull()
+    {
+        var attributes = Fixture("invoice").Without("subtotal", "discount", "discount_percent", "tax");
+        attributes["items"] = new JsonArray([.. attributes["items"]!.AsArray().Select(item => item!.AsObject().Without("tax_rate"))]);
+
+        var invoice = new Invoice(Element(attributes));
+
+        Assert.Null(invoice.Subtotal);
+        Assert.Null(invoice.Discount);
+        Assert.Null(invoice.DiscountPercent);
+        Assert.Null(invoice.Tax);
+        Assert.All(invoice.Items, item => Assert.Null(item.TaxRate));
+        Assert.Equal(1250.00m, invoice.Amount);
     }
 
     [Fact]

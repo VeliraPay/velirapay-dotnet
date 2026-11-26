@@ -119,6 +119,10 @@ public sealed class ChargeTests
         Assert.StartsWith("c1f0e2d3", refund.Txid, StringComparison.Ordinal);
         Assert.StartsWith("https://mempool.space/tx/", refund.ExplorerUrl, StringComparison.Ordinal);
         Assert.Equal(Utc("2026-09-21T14:30:00Z"), refund.CreatedAt);
+        Assert.Equal("CN-0001", refund.Number);
+        Assert.Equal("30.00", refund.FiatAmount?.ToString(CultureInfo.InvariantCulture));
+        Assert.Equal("https://velirapay.com/c/k3v9x2m7q8wz/credit-notes/CN-0001", refund.CreditNoteUrl);
+        Assert.Equal(Utc("2026-09-21T14:29:41Z"), refund.ConfirmedOnChainAt);
         Assert.Equal(60000m, charge.ExchangeRate);
         Assert.Equal("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", charge.DepositAddress);
         Assert.Null(charge.NetworkSurcharge);
@@ -158,6 +162,22 @@ public sealed class ChargeTests
         Assert.Equal(Utc("2026-09-20T10:05:41Z"), charge.PaidAt);
         Assert.Null(charge.AcceptedAt);
         Assert.Equal(Utc("2026-09-20T09:55:00Z"), charge.CreatedAt);
+    }
+
+    [Fact]
+    public void ARefundRecordedOnYourWordOrBeforeCreditNotesReadsWhatItLacksAsNull()
+    {
+        var onYourWord = new Refund(Element(Json("""{"amount":"0.0005","txid":null,"reason":null,"explorer_url":null,"created_at":"2026-09-21T14:30:00.000000Z","number":"CN-0002","fiat_amount":"30.00","credit_note_url":"https://velirapay.com/c/k3v9x2m7q8wz/credit-notes/CN-0002","confirmed_on_chain_at":null}""")));
+        var older = new Refund(Element(Json("""{"amount":"0.0005","txid":"c1f0e2d3","reason":"Partial refund","explorer_url":null,"created_at":"2026-09-21T14:30:00.000000Z"}""")));
+
+        Assert.Equal("CN-0002", onYourWord.Number);
+        Assert.Null(onYourWord.ConfirmedOnChainAt);
+        Assert.Null(onYourWord.Txid);
+        Assert.Null(older.Number);
+        Assert.Null(older.FiatAmount);
+        Assert.Null(older.CreditNoteUrl);
+        Assert.Null(older.ConfirmedOnChainAt);
+        Assert.Equal(0.0005m, older.Amount);
     }
 
     [Fact]

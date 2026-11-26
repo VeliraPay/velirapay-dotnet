@@ -71,6 +71,93 @@ public sealed class ChargeService : Service
         return new Charge(await RequestAsync(HttpMethod.Post, Path("/v1/charges/{id}/refunds", id), options, requestOptions, cancellationToken).ConfigureAwait(false));
     }
 
+    /// <summary>List the refunds started for a charge, newest first; the page's <see cref="Page{T}.AutoPagingIteratorAsync"/> walks the rest.</summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="options">The page to fetch.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public Task<Page<RefundRequest>> RefundRequestsAsync(string id, ListOptions? options = null, CancellationToken cancellationToken = default)
+        => PageAsync(Path("/v1/charges/{id}/refund-requests", id), Query(options), refundRequest => new RefundRequest(refundRequest), cancellationToken);
+
+    /// <summary>Retrieve one of a charge's refund requests.</summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="refundRequestId">The refund request's id.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public async Task<RefundRequest> RetrieveRefundRequestAsync(string id, string refundRequestId, CancellationToken cancellationToken = default)
+        => new(await RequestAsync(HttpMethod.Get, Path("/v1/charges/{id}/refund-requests/{id}", id, refundRequestId), null, null, cancellationToken).ConfigureAwait(false));
+
+    /// <summary>
+    /// Start a refund: set the amount aside and, without an address, email the customer a link to give one, which is the request's
+    /// <see cref="RefundRequest.AddressUrl"/> either way. You then send it from your own wallet, and it is recorded once the chain shows it.
+    /// An underpaid charge or a late payment is accepted first, and the network surcharge is never refundable; the API answers 422 otherwise.
+    /// </summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="options">The refund.</param>
+    /// <param name="requestOptions">An idempotency key.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public async Task<RefundRequest> StartRefundAsync(string id, RefundRequestCreateOptions options, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return new RefundRequest(await RequestAsync(HttpMethod.Post, Path("/v1/charges/{id}/refund-requests", id), options, requestOptions, cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>Give a refund waiting for the customer's address the one they gave you some other way. The API answers 409 once the refund no longer takes one.</summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="refundRequestId">The refund request's id.</param>
+    /// <param name="options">The address.</param>
+    /// <param name="requestOptions">An idempotency key.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public async Task<RefundRequest> SetRefundAddressAsync(string id, string refundRequestId, RefundAddressOptions options, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return new RefundRequest(await RequestAsync(HttpMethod.Post, Path("/v1/charges/{id}/refund-requests/{id}/address", id, refundRequestId), options, requestOptions, cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Give a refund the hash of the transaction you sent it in. The chain is looked at straight away, and the refund is recorded once the transfer
+    /// has its confirmations. The API answers 409 unless the refund waits for your transfer or is confirming, and 422 for a hash already taken.
+    /// </summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="refundRequestId">The refund request's id.</param>
+    /// <param name="options">The transaction.</param>
+    /// <param name="requestOptions">An idempotency key.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public async Task<RefundRequest> MarkRefundSentAsync(string id, string refundRequestId, RefundSentOptions options, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return new RefundRequest(await RequestAsync(HttpMethod.Post, Path("/v1/charges/{id}/refund-requests/{id}/sent", id, refundRequestId), options, requestOptions, cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Record a started refund as sent, on your word, for a transfer the chain is not seen to carry. The API answers 409 once the refund is no longer open,
+    /// and 422 for a hash already taken.
+    /// </summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="refundRequestId">The refund request's id.</param>
+    /// <param name="options">The transaction that carried it, when there is one.</param>
+    /// <param name="requestOptions">An idempotency key.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public async Task<RefundRequest> CompleteRefundAsync(string id, string refundRequestId, RefundCompleteOptions? options = null, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+        => new(await RequestAsync(HttpMethod.Post, Path("/v1/charges/{id}/refund-requests/{id}/complete", id, refundRequestId), options is { Parameters.Count: > 0 } ? options : null, requestOptions, cancellationToken).ConfigureAwait(false));
+
+    /// <summary>Email the customer the link to give a refund's address again. The API answers 409 unless the refund waits for the address, and when the email could not go.</summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="refundRequestId">The refund request's id.</param>
+    /// <param name="requestOptions">An idempotency key.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public async Task<RefundRequest> ResendRefundLinkAsync(string id, string refundRequestId, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+        => new(await RequestAsync(HttpMethod.Post, Path("/v1/charges/{id}/refund-requests/{id}/resend", id, refundRequestId), null, requestOptions, cancellationToken).ConfigureAwait(false));
+
+    /// <summary>Stop a refund that has not been recorded, which frees what it set aside. The API answers 409 once the refund is no longer open.</summary>
+    /// <param name="id">The charge's id.</param>
+    /// <param name="refundRequestId">The refund request's id.</param>
+    /// <param name="requestOptions">An idempotency key.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    public async Task<RefundRequest> CancelRefundAsync(string id, string refundRequestId, RequestOptions? requestOptions = null, CancellationToken cancellationToken = default)
+        => new(await RequestAsync(HttpMethod.Post, Path("/v1/charges/{id}/refund-requests/{id}/cancel", id, refundRequestId), null, requestOptions, cancellationToken).ConfigureAwait(false));
+
     /// <summary>Email the customer the payment page of a pending charge.</summary>
     /// <param name="id">The charge's id.</param>
     /// <param name="requestOptions">An idempotency key.</param>

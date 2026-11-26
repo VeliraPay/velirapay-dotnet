@@ -22,6 +22,10 @@ public sealed class Invoice : ApiResource
         Memo = JsonValues.NullableString(data, "memo");
         Amount = JsonValues.Decimal(data, "amount");
         Currency = JsonValues.String(data, "currency");
+        Subtotal = JsonValues.NullableDecimal(data, "subtotal");
+        Discount = JsonValues.NullableDecimal(data, "discount");
+        DiscountPercent = JsonValues.NullableDecimal(data, "discount_percent");
+        Tax = JsonValues.NullableDecimal(data, "tax");
         Items = JsonValues.Objects(data, "items", item => new InvoiceItem(item));
         DueAt = JsonValues.Day(data, "due_at");
         ExpiresAt = JsonValues.Date(data, "expires_at");
@@ -59,11 +63,23 @@ public sealed class Invoice : ApiResource
     /// <summary>A note shown on the invoice.</summary>
     public string? Memo { get; }
 
-    /// <summary>The total due.</summary>
+    /// <summary>The total due, after any discount and with any tax.</summary>
     public decimal Amount { get; }
 
     /// <summary>The fiat currency, such as "USD".</summary>
     public string Currency { get; }
+
+    /// <summary>What the items came to before the discount and tax, or null for an invoice whose items carry neither, whose <see cref="Amount"/> is then their sum.</summary>
+    public decimal? Subtotal { get; }
+
+    /// <summary>What the discount took off the items before tax, or null when there is none.</summary>
+    public decimal? Discount { get; }
+
+    /// <summary>The percentage the discount took off, such as 10, or null for a fixed discount or none.</summary>
+    public decimal? DiscountPercent { get; }
+
+    /// <summary>The tax added on top of the items at their tax rates, after the discount, or null for an invoice without a breakdown.</summary>
+    public decimal? Tax { get; }
 
     /// <summary>The lines of an itemised invoice.</summary>
     public IReadOnlyList<InvoiceItem> Items { get; }
@@ -170,6 +186,7 @@ public sealed class InvoiceItem : ApiResource
         Description = JsonValues.String(data, "description");
         Quantity = JsonValues.Decimal(data, "quantity", 1m);
         UnitAmount = JsonValues.Decimal(data, "unit_amount");
+        TaxRate = JsonValues.NullableDecimal(data, "tax_rate");
         Total = JsonValues.Decimal(data, "total");
     }
 
@@ -181,6 +198,9 @@ public sealed class InvoiceItem : ApiResource
 
     /// <summary>The price of one unit, in the invoice's currency.</summary>
     public decimal UnitAmount { get; }
+
+    /// <summary>The tax rate on the line, in percent, such as 20, or null when it carries none.</summary>
+    public decimal? TaxRate { get; }
 
     /// <summary>The quantity times the unit amount.</summary>
     public decimal Total { get; }

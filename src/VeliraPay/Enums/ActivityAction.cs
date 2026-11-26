@@ -88,6 +88,12 @@ public static class ActivityAction
     /// <summary>A refund was recorded.</summary>
     public const string RefundRecorded = "refund.recorded";
 
+    /// <summary>A refund was started, which set its amount aside.</summary>
+    public const string RefundRequested = "refund.requested";
+
+    /// <summary>A started refund was canceled, which freed what it set aside.</summary>
+    public const string RefundCanceled = "refund.canceled";
+
     /// <summary>An invoice was voided.</summary>
     public const string InvoiceVoided = "invoice.voided";
 
@@ -204,4 +210,10 @@ public static class ActivityAction
 
     /// <summary>The account's Claude organization was unlinked. Sensitive.</summary>
     public const string ClaudeUnlinked = "claude.unlinked";
+
+    /// <summary>The account connected its books in Xero or QuickBooks, where its payments are then booked. Sensitive.</summary>
+    public const string AccountingConnected = "accounting.connected";
+
+    /// <summary>The account's books were disconnected. Sensitive.</summary>
+    public const string AccountingDisconnected = "accounting.disconnected";
 }

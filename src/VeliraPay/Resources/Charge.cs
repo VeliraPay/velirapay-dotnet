@@ -418,6 +418,10 @@ public sealed class Refund : ApiResource
         Reason = JsonValues.NullableString(data, "reason");
         ExplorerUrl = JsonValues.NullableString(data, "explorer_url");
         CreatedAt = JsonValues.Date(data, "created_at");
+        Number = JsonValues.NullableString(data, "number");
+        FiatAmount = JsonValues.NullableDecimal(data, "fiat_amount");
+        CreditNoteUrl = JsonValues.NullableString(data, "credit_note_url");
+        ConfirmedOnChainAt = JsonValues.Date(data, "confirmed_on_chain_at");
     }
 
     /// <summary>The amount sent back, in the charge's coin.</summary>
@@ -434,4 +438,16 @@ public sealed class Refund : ApiResource
 
     /// <summary>When the refund was recorded.</summary>
     public DateTimeOffset? CreatedAt { get; }
+
+    /// <summary>The number of the refund's credit note, such as "CN-0001", counted per account and mode; null in a payload that leaves it out.</summary>
+    public string? Number { get; }
+
+    /// <summary>What the refund is worth in the charge's <see cref="Charge.FiatCurrency"/>, at the rate the charge was locked at; null in a payload that leaves it out.</summary>
+    public decimal? FiatAmount { get; }
+
+    /// <summary>The printable credit note, which the customer can open too; null in a payload that leaves it out.</summary>
+    public string? CreditNoteUrl { get; }
+
+    /// <summary>When the chain showed the transfer landing at the customer's address, or null when the refund was recorded on your word.</summary>
+    public DateTimeOffset? ConfirmedOnChainAt { get; }
 }

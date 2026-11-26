@@ -15,8 +15,14 @@ public sealed class InvoiceCreateOptions : BaseOptions
     /// <summary>A single total, instead of <see cref="Items"/>.</summary>
     public decimal? Amount { get => Get<decimal?>("amount"); set => Set("amount", value); }
 
-    /// <summary>Up to 50 lines, which make up the total when given.</summary>
+    /// <summary>Up to 50 lines, which make up the total when given, less any discount and with any tax.</summary>
     public IReadOnlyList<InvoiceItemOptions>? Items { get => Get<IReadOnlyList<InvoiceItemOptions>>("items"); set => Set("items", value); }
+
+    /// <summary>A percentage taken off the items before tax, above 0 and below 100, with at most 2 decimal places. Only with <see cref="Items"/>, and not with <see cref="DiscountAmount"/>.</summary>
+    public decimal? DiscountPercent { get => Get<decimal?>("discount_percent"); set => Set("discount_percent", value); }
+
+    /// <summary>A fixed amount taken off the items before tax, in <see cref="Currency"/>, less than they come to, with at most 2 decimal places. Only with <see cref="Items"/>, and not with <see cref="DiscountPercent"/>.</summary>
+    public decimal? DiscountAmount { get => Get<decimal?>("discount_amount"); set => Set("discount_amount", value); }
 
     /// <summary>A note shown on the invoice.</summary>
     public string? Memo { get => Get<string>("memo"); set => Set("memo", value); }
@@ -51,6 +57,9 @@ public sealed class InvoiceItemOptions : BaseOptions
 
     /// <summary>The price of one unit, in the invoice's currency, with at most 2 decimal places.</summary>
     public required decimal UnitAmount { get => Get<decimal?>("unit_amount") ?? 0m; set => Set("unit_amount", value); }
+
+    /// <summary>The tax on the line, in percent from 0 to 100 with at most 2 decimal places, added on top of its price after any discount.</summary>
+    public decimal? TaxRate { get => Get<decimal?>("tax_rate"); set => Set("tax_rate", value); }
 }
 
 /// <summary>Which invoices to list.</summary>

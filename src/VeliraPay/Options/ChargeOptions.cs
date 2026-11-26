@@ -122,6 +122,43 @@ public sealed class RefundOptions : BaseOptions
     public string? Reason { get => Get<string>("reason"); set => Set("reason", value); }
 }
 
+/// <summary>A refund to start for a charge, which sets its amount aside at once. VeliraPay never sends it: you do, from your own wallet.</summary>
+public sealed class RefundRequestCreateOptions : BaseOptions
+{
+    /// <summary>How much to send back, in the charge's coin, with at most 18 decimal places: no more than what is left to refund, the network surcharge, earlier refunds and other open refunds left out.</summary>
+    public required decimal Amount { get => Get<decimal?>("amount") ?? 0m; set => Set("amount", value); }
+
+    /// <summary>Why it is made, up to 255 characters.</summary>
+    public string? Reason { get => Get<string>("reason"); set => Set("reason", value); }
+
+    /// <summary>
+    /// Where the refund goes, when the customer already gave you an address on the charge's network and mode.
+    /// Left out, the customer is asked for one: the link is emailed to the charge's customer email when it has one, and is <see cref="RefundRequest.AddressUrl"/> either way.
+    /// </summary>
+    public string? Address { get => Get<string>("address"); set => Set("address", value); }
+}
+
+/// <summary>The address a customer gave you for a refund waiting for one.</summary>
+public sealed class RefundAddressOptions : BaseOptions
+{
+    /// <summary>The address, on the charge's network and mode, up to 128 characters.</summary>
+    public required string Address { get => Get<string>("address")!; set => Set("address", value); }
+}
+
+/// <summary>The transaction you sent a refund in.</summary>
+public sealed class RefundSentOptions : BaseOptions
+{
+    /// <summary>The transaction's hash. One that already stands for a payment, a payout or another refund is refused.</summary>
+    public required string Txid { get => Get<string>("txid")!; set => Set("txid", value); }
+}
+
+/// <summary>A started refund to record on your word, for a transfer the chain is not seen to carry.</summary>
+public sealed class RefundCompleteOptions : BaseOptions
+{
+    /// <summary>The hash of the transaction that carried it, when there is one.</summary>
+    public string? Txid { get => Get<string>("txid"); set => Set("txid", value); }
+}
+
 /// <summary>How to pay a test-mode charge without coins.</summary>
 public sealed class ChargeSimulateOptions : BaseOptions
 {
