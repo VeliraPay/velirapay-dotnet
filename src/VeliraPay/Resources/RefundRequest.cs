@@ -23,6 +23,7 @@ public sealed class RefundRequest : ApiResource
         LinkExpiresAt = JsonValues.Date(data, "link_expires_at");
         EmailedAt = JsonValues.Date(data, "emailed_at");
         Txid = JsonValues.NullableString(data, "txid");
+        DetectedTxid = JsonValues.NullableString(data, "detected_txid");
         DetectedAmount = JsonValues.NullableDecimal(data, "detected_amount");
         Confirmations = JsonValues.NullableInt(data, "confirmations");
         Refund = JsonValues.NullableObject(data, "refund", refund => new Refund(refund));
@@ -61,10 +62,13 @@ public sealed class RefundRequest : ApiResource
     /// <summary>When the link was last emailed to the customer, or null when it never was.</summary>
     public DateTimeOffset? EmailedAt { get; }
 
-    /// <summary>The transaction you said carried the refund, or the one the chain showed.</summary>
+    /// <summary>The transaction you said carried the refund.</summary>
     public string? Txid { get; }
 
-    /// <summary>What the chain shows arriving at the address for the refund, in the charge's coin.</summary>
+    /// <summary>The transfer the chain shows at the address: the one with your hash, or, while <see cref="Txid"/> is null, one that fits the refund and waits for you to give it to <c>MarkRefundSentAsync()</c>.</summary>
+    public string? DetectedTxid { get; }
+
+    /// <summary>What that transfer carried, in the charge's coin.</summary>
     public decimal? DetectedAmount { get; }
 
     /// <summary>How many confirmations that transfer has.</summary>

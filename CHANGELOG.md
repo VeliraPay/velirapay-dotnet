@@ -2,6 +2,11 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- `RefundRequest` gains `DetectedTxid`, the transfer the chain shows at the customer's address. A refund request no longer records a transfer it found by its amount alone, since others may pay that address too: while `Txid` is null, `DetectedTxid` names one that fits and the status stays `AwaitingTransfer` until you give it to `MarkRefundSentAsync()`. `Txid` is now only the hash you gave. `RefundRequest` is a class read from the API's JSON, so it gains a read-only property alone.
+- The README says where a typed property stops short of the API's value: a `decimal` holds 28 significant digits, and `IpAsn` an `int`. `RawJson` has the value as it was sent in both cases.
+
 ## 0.2.10 - 2026-11-26
 
 - Refunds that VeliraPay follows through, on `Charges`: `StartRefundAsync()` sets an amount aside and, without an `Address`, emails the customer a link to give one, which is the request's `AddressUrl` either way; `SetRefundAddressAsync()` takes an address they gave you some other way, `MarkRefundSentAsync()` the hash of the transfer you sent from your own wallet, which the chain is looked at for straight away, and `CompleteRefundAsync()` records the refund on your word, with or without a hash; `ResendRefundLinkAsync()` emails the link again, `CancelRefundAsync()` frees what was set aside, and `RefundRequestsAsync()` and `RetrieveRefundRequestAsync()` read them. They take `RefundRequestCreateOptions` (`Amount`, `Reason`, `Address`), `RefundAddressOptions` (`Address`), `RefundSentOptions` (`Txid`) and `RefundCompleteOptions` (`Txid`), and answer with a `RefundRequest`: its `Status`, one of the new `RefundRequestStatus` values (`awaiting_address`, `awaiting_transfer`, `confirming`, `refunded`, `canceled`, `expired`), `Amount`, `Address`, `AddressGivenBy`, `LinkExpiresAt`, `EmailedAt`, `Txid`, `DetectedAmount`, `Confirmations`, the `Refund` it was recorded as, and `IsOpen` and `IsRefunded`. A charge's refund requests are a paged list without an `IteratorAsync()`, like webhook deliveries: the page's `AutoPagingIteratorAsync()` walks them. All of them need `charges:refund`, as `RecordRefundAsync()` does, which stays as it was.

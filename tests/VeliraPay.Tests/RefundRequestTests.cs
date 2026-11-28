@@ -35,7 +35,7 @@ public sealed class RefundRequestTests
     [Fact]
     public async Task ARefundIsStartedWithAnAddressTheCustomerAlreadyGave()
     {
-        var http = new MockHttp().Json(Data(Fixture("refund_request").With(("status", "awaiting_transfer"), ("address_given_by", "merchant"), ("txid", null), ("detected_amount", null), ("confirmations", null))), 201);
+        var http = new MockHttp().Json(Data(Fixture("refund_request").With(("status", "awaiting_transfer"), ("address_given_by", "merchant"), ("txid", null), ("detected_txid", null), ("detected_amount", null), ("confirmations", null))), 201);
 
         var refundRequest = await Client(http).Charges.StartRefundAsync("k3v9x2m7q8wz", new RefundRequestCreateOptions
         {
@@ -46,6 +46,7 @@ public sealed class RefundRequestTests
         Assert.Equal("""{"amount":"0.0025","address":"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"}""", http.LastRequest.Body);
         Assert.Equal(RefundRequestStatus.AwaitingTransfer, refundRequest.Status);
         Assert.Equal("merchant", refundRequest.AddressGivenBy);
+        Assert.Null(refundRequest.DetectedTxid);
         Assert.Null(refundRequest.Confirmations);
         Assert.True(refundRequest.IsOpen);
     }
@@ -71,6 +72,7 @@ public sealed class RefundRequestTests
         Assert.Equal(Utc("2026-10-05T14:00:00Z"), refundRequest.LinkExpiresAt);
         Assert.Equal(Utc("2026-09-21T14:00:02Z"), refundRequest.EmailedAt);
         Assert.StartsWith("c1f0e2d3", refundRequest.Txid, StringComparison.Ordinal);
+        Assert.Equal(refundRequest.Txid, refundRequest.DetectedTxid);
         Assert.Equal(0.0005m, refundRequest.DetectedAmount);
         Assert.Equal(1, refundRequest.Confirmations);
         Assert.Null(refundRequest.Refund);
@@ -243,6 +245,7 @@ public sealed class RefundRequestTests
         ("address_given_by", null),
         ("address_url", AddressUrl),
         ("txid", null),
+        ("detected_txid", null),
         ("detected_amount", null),
         ("confirmations", null));
 }
