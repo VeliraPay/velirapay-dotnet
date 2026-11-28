@@ -2,7 +2,7 @@
 
 All notable changes to this library are documented here. It follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 0.2.11 - 2026-11-28
 
 - `RefundRequest` gains `DetectedTxid`, the transfer the chain shows at the customer's address. A refund request no longer records a transfer it found by its amount alone, since others may pay that address too: while `Txid` is null, `DetectedTxid` names one that fits and the status stays `AwaitingTransfer` until you give it to `MarkRefundSentAsync()`. `Txid` is now only the hash you gave. `RefundRequest` is a class read from the API's JSON, so it gains a read-only property alone.
 - The README says where a typed property stops short of the API's value: a `decimal` holds 28 significant digits, and `IpAsn` an `int`. `RawJson` has the value as it was sent in both cases.
